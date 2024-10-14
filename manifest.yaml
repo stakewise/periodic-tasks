@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: multichain-price-update
+spec:
+  schedule: "00 */6 * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      template:
+        spec:
+          containers:
+          - name: update
+            image: europe-west4-docker.pkg.dev/stakewiselabs/public/multichain:latest
+            imagePullPolicy: Always
+            envFrom:
+            - configMapRef:
+                name: multichain-config
+          restartPolicy: OnFailure
