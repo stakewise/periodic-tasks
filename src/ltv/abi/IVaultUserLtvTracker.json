@@ -1,0 +1,93 @@
+[
+  {
+    "type": "function",
+    "name": "getVaultMaxLtv",
+    "inputs": [
+      {
+        "name": "vault",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "harvestParams",
+        "type": "tuple",
+        "internalType": "struct IKeeperRewards.HarvestParams",
+        "components": [
+          {
+            "name": "rewardsRoot",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "reward",
+            "type": "int160",
+            "internalType": "int160"
+          },
+          {
+            "name": "unlockedMevReward",
+            "type": "uint160",
+            "internalType": "uint160"
+          },
+          {
+            "name": "proof",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "updateVaultMaxLtvUser",
+    "inputs": [
+      {
+        "name": "vault",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "user",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "harvestParams",
+        "type": "tuple",
+        "internalType": "struct IKeeperRewards.HarvestParams",
+        "components": [
+          {
+            "name": "rewardsRoot",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "reward",
+            "type": "int160",
+            "internalType": "int160"
+          },
+          {
+            "name": "unlockedMevReward",
+            "type": "uint160",
+            "internalType": "uint160"
+          },
+          {
+            "name": "proof",
+            "type": "bytes32[]",
+            "internalType": "bytes32[]"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  }
+]

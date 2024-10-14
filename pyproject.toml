@@ -1,0 +1,82 @@
+[tool.poetry]
+name = "periodic-tasks"
+version = "v0.1.0"
+description = ""
+authors = ["StakeWise Labs <info@stakewise.io>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+python-dotenv = "==1.0.1"
+gql = {extras = ["requests"], version = "==3.5.0"}
+sw-utils = {git = "https://github.com/stakewise/sw-utils.git", rev = "v0.6.25"}
+python-decouple = "==3.8"
+
+[tool.poetry.group.dev.dependencies]
+pylint = "==3.0.1"
+mypy = "==1.6.1"
+isort = "==5.12.0"
+pre-commit = "==3.5.0"
+Flake8-pyproject = "==1.2.3"
+bandit = { version = "==1.7.5", extras = ["toml"] }
+black = { version = "==23.10.0", extras = ["d"] }
+flake8-print = "==5.0.0"
+flake8-datetimez = "==20.10.0"
+types-requests = "==2.31.0.20240311"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.bandit]
+exclude_dirs = ["src/config/networks.py"]
+skips = ["B608"]
+
+[tool.pylint."pre-commit-hook"]
+disable = ["C0103", "C0114", "C0115", "C0116", "R0801", "R0902", "R0903", "R0914", "W0511", "W0703"]
+ignore-paths=["src/.*/tests/.*", "src/conftest.py"]
+
+[tool.pylint."BASIC"]
+good-names = ["db", "i", "w3"]
+extension-pkg-whitelist = "pydantic"
+ignored-modules = ["starlette", "milagro_bls_binding"]
+
+[tool.flake8]
+extend-ignore = ["E203", "E501"]  # line length will be checked by pylint
+
+[tool.mypy]
+exclude = ["test"]
+ignore_missing_imports = true
+python_version = "3.10"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = 'web3.*'
+no_implicit_optional = false
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 100
+skip-string-normalization = true
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
