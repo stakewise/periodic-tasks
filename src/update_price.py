@@ -1,6 +1,7 @@
 # type: ignore
 import logging
 import os
+import sys
 import time
 
 from dotenv import load_dotenv
@@ -20,7 +21,7 @@ CHECK_INTERVAL = 60  # Check every minute
 MAINNET_PROVIDER = Web3(Web3.HTTPProvider(os.getenv('MAINNET_RPC_URL')))
 TARGET_RPC_PROVIDER = Web3(Web3.HTTPProvider(os.getenv('TARGET_RPC_URL')))
 PRIVATE_KEY = os.getenv('PRIVATE_KEY')
-ACCOUNT = Account.from_key(PRIVATE_KEY)
+ACCOUNT = Account().from_key(PRIVATE_KEY)
 ACCOUNT_ADDRESS = ACCOUNT.address
 MAINNET_PROVIDER.middleware_onion.add(construct_sign_and_send_raw_middleware(ACCOUNT))
 
@@ -88,8 +89,12 @@ def check_and_sync():
         }
     )
 
-    logger.info(f'Sync transaction sent: {tx.hex()}')
+    logger.info('Sync transaction sent: %s', tx.hex())
     receipt = MAINNET_PROVIDER.eth.wait_for_transaction_receipt(tx)
+
+    if not receipt['status']:
+        raise RuntimeError(f'Sync transaction failed, tx hash: {tx.hex()}')
+
     logger.info('Sync transaction confirmed.')
 
     # Step 4: Wait for the timestamp to update on the target chain
@@ -110,4 +115,4 @@ if __name__ == '__main__':
         check_and_sync()
     except Exception as e:
         logger.error(e)
-        exit(1)
+        sys.exit(1)
