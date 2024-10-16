@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: "Periodic tasks: update max LTV"
+spec:
+  schedule: "00 */6 * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      template:
+        spec:
+          containers:
+          - name: Update max LTV
+            image: europe-west4-docker.pkg.dev/stakewiselabs/public/periodic-tasks:latest
+            imagePullPolicy: Always
+            command: "src/update_ltv.py"
+            envFrom:
+              - configMapRef:
+                  name: periodic-tasks-config
+          restartPolicy: OnFailure

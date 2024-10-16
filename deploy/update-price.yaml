@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: multichain-price-update
+  name: "Periodic tasks: update price"
 spec:
   schedule: "00 */6 * * *"
   jobTemplate:
@@ -10,10 +10,11 @@ spec:
       template:
         spec:
           containers:
-          - name: update
-            image: europe-west4-docker.pkg.dev/stakewiselabs/public/multichain:latest
+          - name: Update price
+            image: europe-west4-docker.pkg.dev/stakewiselabs/public/periodic-tasks:latest
             imagePullPolicy: Always
+            command: "src/update_price.py"
             envFrom:
             - configMapRef:
-                name: multichain-config
+                name: periodic-tasks-config
           restartPolicy: OnFailure
