@@ -2,10 +2,9 @@ import json
 import logging
 from pathlib import Path
 
-from eth_typing import BlockNumber, ChecksumAddress
+from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
-from web3.contract.contract import ContractEvent, ContractEvents, ContractFunctions
-from web3.types import EventData
+from web3.contract.contract import ContractEvents, ContractFunctions
 
 from .clients import execution_client, hot_wallet_account
 from .settings import network_config
@@ -31,30 +30,6 @@ class ContractWrapper:
     @property
     def events(self) -> ContractEvents:
         return self.contract.events
-
-    @property
-    def events_blocks_range_interval(self) -> int:
-        return 43200 // network_config.SECONDS_PER_BLOCK  # 12 hrs
-
-    def _get_last_event(
-        self,
-        event: type[ContractEvent],
-        from_block: BlockNumber,
-        to_block: BlockNumber,
-        argument_filters: dict | None = None,
-    ) -> EventData | None:
-        blocks_range = self.events_blocks_range_interval
-
-        while to_block >= from_block:
-            events = event.get_logs(
-                fromBlock=BlockNumber(max(to_block - blocks_range, from_block)),
-                toBlock=to_block,
-                argument_filters=argument_filters,
-            )
-            if events:
-                return events[-1]
-            to_block = BlockNumber(to_block - blocks_range - 1)
-        return None
 
 
 class VaultUserLTVTrackerContract(ContractWrapper):
