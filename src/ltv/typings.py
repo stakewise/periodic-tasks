@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from eth_typing import ChecksumAddress, HexStr
+from hexbytes import HexBytes
 from sw_utils import convert_to_mgno
 from web3 import Web3
 from web3.types import Wei
@@ -11,10 +12,10 @@ from src.ltv.settings import NETWORK
 
 @dataclass
 class HarvestParams:
-    rewards_root: bytes
+    rewards_root: HexBytes
     reward: Wei
     unlocked_mev_reward: Wei
-    proof: list[bytes]
+    proof: list[HexBytes]
 
     def __str__(self) -> str:
         d = {

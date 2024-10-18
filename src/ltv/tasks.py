@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from eth_typing import ChecksumAddress
 from gql import gql
+from hexbytes import HexBytes
 from web3 import Web3
 from web3.types import Wei
 
@@ -141,8 +142,8 @@ def graph_get_harvest_params(vault_address: ChecksumAddress) -> HarvestParams | 
         return None
 
     return HarvestParams(
-        rewards_root=Web3.to_bytes(hexstr=vault_data['rewardsRoot']),
+        rewards_root=HexBytes(Web3.to_bytes(hexstr=vault_data['rewardsRoot'])),
         reward=Wei(int(vault_data['proofReward'])),
         unlocked_mev_reward=Wei(int(vault_data['proofUnlockedMevReward'])),
-        proof=[Web3.to_bytes(hexstr=p) for p in vault_data['proof']],
+        proof=[HexBytes(Web3.to_bytes(hexstr=p)) for p in vault_data['proof']],
     )
