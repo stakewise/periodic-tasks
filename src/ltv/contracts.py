@@ -84,21 +84,7 @@ class VaultUserLTVTrackerContract(ContractWrapper):
         ).transact({'from': hot_wallet_account.address})
 
 
-class KeeperContract(ContractWrapper):
-    def get_rewards_updated_event(
-        self, from_block: BlockNumber, to_block: BlockNumber
-    ) -> EventData | None:
-        return self._get_last_event(
-            self.contract.events.RewardsUpdated,  # type: ignore[arg-type]
-            from_block=from_block,
-            to_block=to_block,
-        )
-
-
 vault_user_ltv_tracker_contract = VaultUserLTVTrackerContract(
     abi_path='abi/IVaultUserLtvTracker.json',
     address=network_config.VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS,
-)
-keeper_contract = KeeperContract(
-    abi_path='abi/IKeeper.json', address=network_config.KEEPER_CONTRACT_ADDRESS
 )

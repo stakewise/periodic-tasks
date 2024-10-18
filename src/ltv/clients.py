@@ -3,7 +3,6 @@ import logging
 import gql
 from eth_account import Account
 from gql.transport.requests import RequestsHTTPTransport
-from sw_utils import IpfsFetchClient
 from web3 import Web3
 from web3.middleware import construct_sign_and_send_raw_middleware
 
@@ -12,8 +11,6 @@ from .settings import (
     GRAPH_API_TIMEOUT,
     GRAPH_API_URL,
     HOT_WALLET_PRIVATE_KEY,
-    IPFS_FETCH_CLIENT_TIMEOUT,
-    IPFS_FETCH_ENDPOINTS,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -40,8 +37,3 @@ def get_graph_client() -> gql.Client:
 
 
 graph_client = get_graph_client()
-
-ipfs_fetch_client = IpfsFetchClient(
-    ipfs_endpoints=IPFS_FETCH_ENDPOINTS,
-    timeout=IPFS_FETCH_CLIENT_TIMEOUT,
-)
