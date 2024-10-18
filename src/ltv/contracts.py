@@ -4,6 +4,7 @@ from pathlib import Path
 
 from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
+from web3 import Web3
 from web3.contract.contract import ContractEvents, ContractFunctions
 
 from .clients import execution_client, hot_wallet_account
@@ -33,6 +34,10 @@ class ContractWrapper:
 
 
 class VaultUserLTVTrackerContract(ContractWrapper):
+    def get_max_ltv_user(self, vault: ChecksumAddress) -> ChecksumAddress:
+        user = self.contract.functions.vaultToUser(vault).call()
+        return Web3.to_checksum_address(user)
+
     def get_vault_max_ltv(self, vault: ChecksumAddress, harvest_params: HarvestParams) -> int:
         return self.contract.functions.getVaultMaxLtv(
             vault,

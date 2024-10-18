@@ -24,12 +24,12 @@ def update_vault_max_ltv_user() -> None:
     """
     Finds user having maximum LTV in given vault and submits this user in the LTV Tracker contract.
     """
-    # Get max LTV for vault
-    user = graph_get_vault_max_ltv_allocator(VAULT)
-    if user is None:
+    # Get max LTV user for vault
+    max_ltv_user = graph_get_vault_max_ltv_allocator(VAULT)
+    if max_ltv_user is None:
         logger.warning('No allocators in vault')
         return
-    logger.info('max LTV user for vault %s is %s', VAULT, user)
+    logger.info('max LTV user for vault %s is %s', VAULT, max_ltv_user)
 
     block = execution_client.eth.get_block('finalized')
     logger.debug('Current block: %d', block['number'])
@@ -44,8 +44,16 @@ def update_vault_max_ltv_user() -> None:
     ltv = vault_user_ltv_tracker_contract.get_vault_max_ltv(VAULT, harvest_params)
     logger.info('Current LTV: %s', Decimal(ltv) / WAD)
 
+    # Get prev max LTV user
+    prev_max_ltv_user = vault_user_ltv_tracker_contract.get_max_ltv_user(VAULT)
+    if max_ltv_user == prev_max_ltv_user:
+        logger.info('Max LTV user did not change since last update. Skip updating user.')
+        return
+
     # Update LTV
-    tx = vault_user_ltv_tracker_contract.update_vault_max_ltv_user(VAULT, user, harvest_params)
+    tx = vault_user_ltv_tracker_contract.update_vault_max_ltv_user(
+        VAULT, max_ltv_user, harvest_params
+    )
     logger.info('Update transaction sent, tx hash: %s', tx.hex())
 
     # Wait for tx receipt

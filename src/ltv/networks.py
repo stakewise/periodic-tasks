@@ -26,7 +26,7 @@ NETWORKS: dict[Network, NetworkConfig] = {
     ),
     Network.HOLESKY: NetworkConfig(
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0xB0A6f7eFfB7e45874ec307C1D5BC18E465c83D39'
+            '0xcB85952262C80422E7925593C872fBe49b13C432'
         ),
     ),
     Network.GNOSIS: NetworkConfig(
