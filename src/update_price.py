@@ -18,10 +18,10 @@ TWELVE_HOURS = 12 * 60 * 60
 ONE_HOUR = 60 * 60
 CHECK_INTERVAL = 60  # Check every minute
 
-MAINNET_PROVIDER = Web3(Web3.HTTPProvider(os.getenv('MAINNET_RPC_URL')))
+MAINNET_PROVIDER = Web3(Web3.HTTPProvider(os.getenv('EXECUTION_ENDPOINT')))
 TARGET_RPC_PROVIDER = Web3(Web3.HTTPProvider(os.getenv('TARGET_RPC_URL')))
-PRIVATE_KEY = os.getenv('PRIVATE_KEY')
-ACCOUNT = Account().from_key(PRIVATE_KEY)
+HOT_WALLET_PRIVATE_KEY = os.getenv('HOT_WALLET_PRIVATE_KEY')
+ACCOUNT = Account().from_key(HOT_WALLET_PRIVATE_KEY)
 ACCOUNT_ADDRESS = ACCOUNT.address
 MAINNET_PROVIDER.middleware_onion.add(construct_sign_and_send_raw_middleware(ACCOUNT))
 
