@@ -1,0 +1,8 @@
+__pycache__/
+venv
+dist
+.mypy_cache
+.idea
+*.env
+.DS_Store
+docker-compose.*.yml
