@@ -72,24 +72,6 @@ def update_vault_max_ltv_user() -> None:
     logger.info('Completed')
 
 
-def get_vault_max_ltv() -> None:
-    """
-    Prints max LTV for vault
-    """
-    block = execution_client.eth.get_block('finalized')
-    logger.debug('Current block: %d', block['number'])
-
-    harvest_params = graph_get_harvest_params(VAULT)
-    if not harvest_params:
-        logger.warning('No harvest params for vault %s', VAULT)
-        return
-    logger.debug('Harvest params: %s', harvest_params)
-
-    # Get current LTV
-    ltv = vault_user_ltv_tracker_contract.get_vault_max_ltv(VAULT, harvest_params)
-    logger.info('Current LTV: %s', Decimal(ltv) / WAD)
-
-
 def graph_get_vault_max_ltv_allocator(vault_address: str) -> ChecksumAddress | None:
     query = gql(
         """

@@ -23,12 +23,6 @@ logger.info('Wallet address: %s', hot_wallet_account.address)
 
 
 def get_graph_client() -> gql.Client:
-    if GRAPH_API_URL is None:
-        raise ValueError('GRAPH_API_URL must be set')
-
-    if GRAPH_API_TIMEOUT is None:
-        raise ValueError('GRAPH_API_TIMEOUT must be set')
-
     transport = RequestsHTTPTransport(
         url=GRAPH_API_URL,
         timeout=GRAPH_API_TIMEOUT,
