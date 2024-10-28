@@ -1,36 +1,18 @@
-import json
 import logging
-from pathlib import Path
 
 from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
 from web3 import Web3
-from web3.contract.contract import ContractEvents, ContractFunctions
 
-from .clients import execution_client, hot_wallet_account
-from .settings import network_config
+from src.common.clients import hot_wallet_account
+from src.common.contracts import ContractWrapper
+from src.ltv.settings import network_config
+
 from .typings import HarvestParams
 
 logger = logging.getLogger(__name__)
 
-
-class ContractWrapper:
-    def __init__(self, abi_path: str, address: ChecksumAddress):
-        self.address = address
-        self.contract = execution_client.eth.contract(address=address, abi=self._load_abi(abi_path))
-
-    def _load_abi(self, abi_path: str) -> dict:
-        current_dir = Path(__file__).parent
-        with open(current_dir / abi_path, encoding='utf-8') as f:
-            return json.load(f)
-
-    @property
-    def functions(self) -> ContractFunctions:
-        return self.contract.functions
-
-    @property
-    def events(self) -> ContractEvents:
-        return self.contract.events
+ABI_DIR = 'src/ltv/abi'
 
 
 class VaultUserLTVTrackerContract(ContractWrapper):
@@ -65,6 +47,6 @@ class VaultUserLTVTrackerContract(ContractWrapper):
 
 
 vault_user_ltv_tracker_contract = VaultUserLTVTrackerContract(
-    abi_path='abi/IVaultUserLtvTracker.json',
+    abi_path=f'{ABI_DIR}/IVaultUserLtvTracker.json',
     address=network_config.VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS,
 )

@@ -8,7 +8,6 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
-python-dotenv = "==1.0.1"
 gql = {extras = ["requests"], version = "==3.5.0"}
 sw-utils = {git = "https://github.com/stakewise/sw-utils.git", rev = "v0.6.25"}
 python-decouple = "==3.8"
