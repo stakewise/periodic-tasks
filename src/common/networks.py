@@ -18,7 +18,7 @@ class Network(Enum):
 
 @dataclass
 class PriceNetworkConfig:
-    # TARGET_CHAIN is not what eth_chainId returns. It is internal id used in contract.
+    # TARGET_CHAIN is not what eth_chainId returns. It is internal id used in PriceFeedSender contract.
     TARGET_CHAIN: int
     # PriceFeedReceiver contract address on target network
     TARGET_ADDRESS: ChecksumAddress
@@ -42,7 +42,7 @@ NETWORKS: dict[Network, NetworkConfig] = {
         PRICE_NETWORK_CONFIG=(
             PriceNetworkConfig(
                 # TARGET_CHAIN is not what eth_chainId returns.
-                # It is internal id used in contract.
+                # It is internal id used in PriceFeedSender contract.
                 TARGET_CHAIN=23,
                 # PriceFeedReceiver contract address on Arbitrum
                 TARGET_ADDRESS=Web3.to_checksum_address(
@@ -79,7 +79,7 @@ NETWORKS: dict[Network, NetworkConfig] = {
         PRICE_NETWORK_CONFIG=(
             PriceNetworkConfig(
                 # TARGET_CHAIN is not what eth_chainId returns.
-                # It is internal id used in contract.
+                # It is internal id used in PriceFeedSender contract.
                 TARGET_CHAIN=10003,
                 # PriceFeedReceiver contract address on Arbitrum Sepolia
                 TARGET_ADDRESS=Web3.to_checksum_address(
