@@ -6,8 +6,9 @@ from web3 import Web3
 
 from src.common.clients import hot_wallet_account
 from src.common.contracts import ContractWrapper
-from src.ltv.settings import network_config
+from src.common.settings import network_config
 
+from .clients import execution_client
 from .typings import HarvestParams
 
 logger = logging.getLogger(__name__)
@@ -49,4 +50,5 @@ class VaultUserLTVTrackerContract(ContractWrapper):
 vault_user_ltv_tracker_contract = VaultUserLTVTrackerContract(
     abi_path=f'{ABI_DIR}/IVaultUserLtvTracker.json',
     address=network_config.VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS,
+    client=execution_client,
 )

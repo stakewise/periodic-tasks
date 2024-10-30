@@ -2,9 +2,9 @@ import logging
 import time
 from datetime import timedelta
 
-from src.common.clients import execution_client, hot_wallet_account
+from src.price.clients import hot_wallet_account, sender_execution_client
 from src.price.contracts import price_feed_sender_contract, target_price_feed_contract
-from src.price.settings import target_address, target_chain
+from src.price.settings import price_network_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,6 +33,9 @@ def check_and_sync() -> None:
         return
 
     # Step 2: Get the cost
+    target_chain = price_network_config.TARGET_CHAIN
+    target_address = price_network_config.TARGET_ADDRESS
+
     current_rate = price_feed_sender_contract.functions.quoteRateSync(target_chain).call()
 
     # Step 3: Sync the rate
@@ -44,7 +47,7 @@ def check_and_sync() -> None:
     )
 
     logger.info('Sync transaction sent: %s', tx.hex())
-    receipt = execution_client.eth.wait_for_transaction_receipt(tx)
+    receipt = sender_execution_client.eth.wait_for_transaction_receipt(tx)
 
     if not receipt['status']:
         raise RuntimeError(f'Sync transaction failed, tx hash: {tx.hex()}')

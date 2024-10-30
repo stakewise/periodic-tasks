@@ -1,10 +1,6 @@
 from src.common.contracts import ContractWrapper
-from src.common.contracts import execution_client as sender_execution_client
-from src.price.clients import target_execution_client
-from src.price.settings import (
-    price_feed_sender_contract_address,
-    target_price_feed_contract_address,
-)
+from src.price.clients import sender_execution_client, target_execution_client
+from src.price.settings import price_network_config
 
 ABI_DIR = 'src/price/abi'
 
@@ -18,12 +14,12 @@ class PriceFeedSenderContract(ContractWrapper):
 
 
 target_price_feed_contract = PriceFeedContract(
-    address=target_price_feed_contract_address,
+    address=price_network_config.TARGET_PRICE_FEED_CONTRACT_ADDRESS,
     abi_path=f'{ABI_DIR}/IPriceFeed.json',
     client=target_execution_client,
 )
 price_feed_sender_contract = PriceFeedSenderContract(
-    address=price_feed_sender_contract_address,
+    address=price_network_config.PRICE_FEED_SENDER_CONTRACT_ADDRESS,
     abi_path=f'{ABI_DIR}/IPriceFeedSender.json',
     client=sender_execution_client,
 )

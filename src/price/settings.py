@@ -1,15 +1,11 @@
-from decouple import config
-from eth_typing import ChecksumAddress
-from web3 import Web3
+from typing import cast
 
+from decouple import config
+
+from src.common.networks import PriceNetworkConfig
+from src.common.settings import network_config
+
+sender_execution_endpoint: str = config('SENDER_EXECUTION_ENDPOINT')
 target_execution_endpoint: str = config('TARGET_EXECUTION_ENDPOINT')
 
-# network config
-target_price_feed_contract_address: ChecksumAddress = config(
-    'TARGET_PRICE_FEED_CONTRACT_ADDRESS', cast=Web3.to_checksum_address
-)
-price_feed_sender_contract_address: ChecksumAddress = config(
-    'PRICE_FEED_SENDER_CONTRACT_ADDRESS', cast=Web3.to_checksum_address
-)
-target_chain: int = config('TARGET_CHAIN', cast=int)
-target_address: ChecksumAddress = config('TARGET_ADDRESS', cast=Web3.to_checksum_address)
+price_network_config = cast(PriceNetworkConfig, network_config.PRICE_NETWORK_CONFIG)
