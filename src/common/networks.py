@@ -18,7 +18,8 @@ class Network(Enum):
 
 @dataclass
 class PriceNetworkConfig:
-    # TARGET_CHAIN is not what eth_chainId returns. It is internal id used in PriceFeedSender contract.
+    # TARGET_CHAIN is not what eth_chainId returns.
+    # It is internal id used in PriceFeedSender contract.
     TARGET_CHAIN: int
     # PriceFeedReceiver contract address on target network
     TARGET_ADDRESS: ChecksumAddress
