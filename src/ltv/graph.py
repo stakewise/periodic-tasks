@@ -13,26 +13,18 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_NETWORK_ID = '0'
-
-
 def graph_get_ostoken_vaults() -> list[ChecksumAddress]:
     query = gql(
         """
-        query OsTokenVaultsIds($network: String) {
-          networks(
-            where: { id: $network }
-          ) {
+        query OsTokenVaultsIds {
+          networks {
             osTokenVaultIds
           }
         }
         """
     )
-    params = {
-        'network': DEFAULT_NETWORK_ID,
-    }
 
-    response = graph_client.execute(query, params)
+    response = graph_client.execute(query)
     vaults = response['networks'][0]['osTokenVaultIds']  # pylint: disable=unsubscriptable-object
     return [Web3.to_checksum_address(vault) for vault in vaults]
 
@@ -72,7 +64,6 @@ def graph_get_harvest_params(vault_address: ChecksumAddress) -> HarvestParams | 
           vault(
             id: $vault
           ) {
-            id
             proof
             proofReward
             proofUnlockedMevReward
@@ -88,12 +79,7 @@ def graph_get_harvest_params(vault_address: ChecksumAddress) -> HarvestParams | 
     response = graph_client.execute(query, params)
     vault_data = response['vault']  # pylint: disable=unsubscriptable-object
 
-    if (
-        vault_data['proof'] is None
-        or vault_data['proofReward'] is None
-        or vault_data['proofUnlockedMevReward'] is None
-        or vault_data['rewardsRoot'] is None
-    ):
+    if not all(vault_data):
         return None
 
     return HarvestParams(

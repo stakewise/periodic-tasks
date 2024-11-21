@@ -29,7 +29,7 @@ def update_vault_max_ltv_user() -> None:
     for vault in ostoken_vaults:
         max_ltv_user = graph_get_vault_max_ltv_allocator(vault)
         if max_ltv_user is None:
-            logger.warning('No allocators in vault')
+            logger.warning('No allocators in vault %s', vault)
             continue
         logger.info('max LTV user for vault %s is %s', vault, max_ltv_user)
 
@@ -41,7 +41,7 @@ def update_vault_max_ltv_user() -> None:
 
         # Get current LTV
         ltv = vault_user_ltv_tracker_contract.get_vault_max_ltv(vault, harvest_params)
-        logger.info('Current LTV: %s', Decimal(ltv) / WAD)
+        logger.info('Current LTV for vault %s: %s', vault, Decimal(ltv) / WAD)
 
         # Get prev max LTV user
         prev_max_ltv_user = vault_user_ltv_tracker_contract.get_max_ltv_user(vault)
@@ -66,6 +66,6 @@ def update_vault_max_ltv_user() -> None:
 
         # Get LTV after update
         ltv = vault_user_ltv_tracker_contract.get_vault_max_ltv(vault, harvest_params)
-        logger.info('LTV after update: %s', Decimal(ltv) / WAD)
+        logger.info('LTV for vault %s after update: %s', vault, Decimal(ltv) / WAD)
 
     logger.info('Completed')
