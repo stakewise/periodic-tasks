@@ -11,6 +11,7 @@ python = "^3.10"
 gql = {extras = ["requests"], version = "==3.5.0"}
 sw-utils = {git = "https://github.com/stakewise/sw-utils.git", rev = "v0.6.25"}
 python-decouple = "==3.8"
+aiohttp = "==3.10.11"
 
 [tool.poetry.group.dev.dependencies]
 pylint = "==3.0.1"
