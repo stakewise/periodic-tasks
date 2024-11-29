@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from eth_typing import ChecksumAddress, HexAddress, HexStr
+from ens.constants import EMPTY_ADDR_HEX
+from eth_typing import ChecksumAddress
 from web3 import Web3
 
-EMPTY_ADDR_HEX = HexAddress(HexStr('0x' + '00' * 20))
 ZERO_CHECKSUM_ADDRESS = Web3.to_checksum_address(EMPTY_ADDR_HEX)  # noqa
 
 
@@ -32,6 +32,8 @@ class PriceNetworkConfig:
 @dataclass
 class NetworkConfig:
     VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS: ChecksumAddress
+    LEVERAGE_STRATEGY_CONTRACT_ADDRESS: ChecksumAddress
+    VAULT_ESCROW_CONTRACT_ADDRESS: ChecksumAddress
     PRICE_NETWORK_CONFIG: PriceNetworkConfig | None = None
 
 
@@ -40,6 +42,8 @@ NETWORKS: dict[Network, NetworkConfig] = {
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xe0Ae8B04922d6e3fA06c2496A94EF2875EFcC7BB'
         ),
+        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        VAULT_ESCROW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         PRICE_NETWORK_CONFIG=(
             PriceNetworkConfig(
                 # TARGET_CHAIN is not what eth_chainId returns.
@@ -64,19 +68,31 @@ NETWORKS: dict[Network, NetworkConfig] = {
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x8f48130b9b96B58035b4A9389eCDaBC00d59d0c8'
         ),
+        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0xdB38cfc6e98a34Cdc60c568f607417E646C75B34'
+        ),
+        VAULT_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0x81Ab00dD782492D62105B8fa9B03E82d4B57798C'
+        ),
     ),
     Network.GNOSIS: NetworkConfig(
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xdEa72c54f63470349CE2dC12f8232FE00241abE6'
         ),
+        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        VAULT_ESCROW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
     ),
     Network.CHIADO: NetworkConfig(
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xe0Ae8B04922d6e3fA06c2496A94EF2875EFcC7BB'
         ),
+        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        VAULT_ESCROW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
     ),
     Network.SEPOLIA: NetworkConfig(
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        VAULT_ESCROW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         PRICE_NETWORK_CONFIG=(
             PriceNetworkConfig(
                 # TARGET_CHAIN is not what eth_chainId returns.
