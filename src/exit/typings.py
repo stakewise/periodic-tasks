@@ -7,6 +7,7 @@ from web3.types import ChecksumAddress, Wei
 class LeveragePosition:
     user: ChecksumAddress
     vault: ChecksumAddress
+    proxy: ChecksumAddress
 
 
 @dataclass

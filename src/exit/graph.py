@@ -2,7 +2,7 @@ import logging
 
 from gql import gql
 from web3 import Web3
-from web3.types import Wei
+from web3.types import ChecksumAddress, Wei
 
 from .clients import graph_client
 from .typings import LeveragePosition, OsTokenExitRequest
@@ -15,10 +15,10 @@ def graph_get_leverage_positions() -> list[LeveragePosition]:
     query = gql(
         """
         query PositionsQuery {
-          leverageStrategyPositions {
+          leverageStrategyPositions(
+            orderBy: borrowLtv, orderDirection: desc
+          ) {
             user
-            osTokenShares
-            id
             proxy
             vault {
               id
@@ -35,7 +35,34 @@ def graph_get_leverage_positions() -> list[LeveragePosition]:
             LeveragePosition(
                 vault=Web3.to_checksum_address(data['vault']['id']),
                 user=Web3.to_checksum_address(data['user']),
+                proxy=Web3.to_checksum_address(data['proxy']),
             )
+        )
+    return result
+
+
+def graph_get_allocators(addresses: list[ChecksumAddress]) -> list[ChecksumAddress]:
+    query = gql(
+        """
+        query AllocatorsQuery($addresses: [String]) {
+          allocators(
+            where: {address_in: $addresses},
+            orderBy: ltv,
+            orderDirection: desc
+          ) {
+            address
+          }
+        }
+        """
+    )
+    params = {
+        'addresses': [address.lower() for address in addresses],
+    }
+    response = graph_client.execute(query, params)
+    result = []
+    for data in response['allocators']:  # pylint: disable=unsubscriptable-object
+        result.append(
+            Web3.to_checksum_address(data['address']),
         )
     return result
 
