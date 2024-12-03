@@ -5,7 +5,7 @@ from .contracts import leverage_strategy_contract, ostoken_vault_escrow_contract
 from .graph import (
     graph_get_allocators,
     graph_get_leverage_positions,
-    graph_osToken_exit_requests,
+    graph_ostoken_exit_requests,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 def force_exits() -> None:
     """Force handle ltv overflow. Trigger os token position exits"""
-    # Get max LTV user for vault
     block = execution_client.eth.get_block('finalized')
     logger.debug('Current block: %d', block['number'])
 
@@ -79,7 +78,7 @@ def force_exits() -> None:
 
     # force claim for exit positions
     max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent()
-    exit_requests = graph_osToken_exit_requests(str(max_ltv_percent / 10**18))
+    exit_requests = graph_ostoken_exit_requests(str(max_ltv_percent / 10**18))
     logger.info('Force assets claim for %d exit requests...', len(exit_requests))
 
     for exit_request in exit_requests:

@@ -1,14 +1,9 @@
-import logging
-
 from gql import gql
 from web3 import Web3
 from web3.types import ChecksumAddress, Wei
 
 from .clients import graph_client
 from .typings import LeveragePosition, OsTokenExitRequest
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 
 def graph_get_leverage_positions() -> list[LeveragePosition]:
@@ -67,12 +62,11 @@ def graph_get_allocators(addresses: list[ChecksumAddress]) -> list[ChecksumAddre
     return result
 
 
-def graph_osToken_exit_requests(ltv: str) -> list[OsTokenExitRequest]:
+def graph_ostoken_exit_requests(ltv: str) -> list[OsTokenExitRequest]:
     query = gql(
         """
         query ExitRequestsQuery($ltv: String) {
           osTokenExitRequests(where: {ltv_gt: $ltv}) {
-            id
             owner
             ltv
             positionTicket
