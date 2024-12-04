@@ -5,7 +5,6 @@ from hexbytes import HexBytes
 from web3 import Web3
 from web3.types import Wei
 
-from src.common.clients import hot_wallet_account
 from src.common.contracts import ContractWrapper
 from src.common.settings import network_config
 
@@ -55,7 +54,7 @@ class VaultUserLTVTrackerContract(ContractWrapper):
                 harvest_params.unlocked_mev_reward,
                 harvest_params.proof,
             ),
-        ).transact({'from': hot_wallet_account.address})
+        ).transact()
 
     @staticmethod
     def _get_zero_harvest_params() -> HarvestParams:

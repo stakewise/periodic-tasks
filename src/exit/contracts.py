@@ -4,7 +4,6 @@ from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
 from web3.types import Wei
 
-from src.common.clients import hot_wallet_account
 from src.common.contracts import ContractWrapper
 from src.common.settings import network_config
 
@@ -27,7 +26,7 @@ class LeverageStrategyContract(ContractWrapper):
         return self.contract.functions.forceEnterExitQueue(
             vault,
             user,
-        ).transact({'from': hot_wallet_account.address})
+        ).transact()
 
 
 class OsTokenVaultEscrowContract(ContractWrapper):
@@ -44,7 +43,7 @@ class OsTokenVaultEscrowContract(ContractWrapper):
             vault,
             exit_position_ticket,
             os_token_shares,
-        ).transact({'from': hot_wallet_account.address})
+        ).transact()
 
 
 leverage_strategy_contract = LeverageStrategyContract(
@@ -55,6 +54,6 @@ leverage_strategy_contract = LeverageStrategyContract(
 
 ostoken_vault_escrow_contract = OsTokenVaultEscrowContract(
     abi_path=f'{ABI_DIR}/IOsTokenVaultEscrow.json',
-    address=network_config.VAULT_ESCROW_CONTRACT_ADDRESS,
+    address=network_config.OSTOKEN_ESCROW_CONTRACT_ADDRESS,
     client=execution_client,
 )

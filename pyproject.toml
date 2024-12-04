@@ -83,3 +83,6 @@ exclude = '''
 
 [tool.vulture]
 exclude = ["networks.py"]
+ignore_names = [
+    "default_account",  # execution client
+]
