@@ -3,7 +3,7 @@ from web3 import Web3
 from web3.types import BlockNumber, ChecksumAddress, Wei
 
 from .clients import graph_client
-from .typings import LeveragePosition, OsTokenExitRequest
+from .typings import ExitRequest, LeveragePosition, OsTokenExitRequest
 
 
 def graph_get_leverage_positions(
@@ -23,6 +23,14 @@ def graph_get_leverage_positions(
             vault {
               id
             }
+            exitRequest {
+              positionTicket
+              timestamp
+              exitQueueIndex
+              isClaimable
+              exitedAssets
+              totalAssets
+            }
           }
         }
         """
@@ -31,13 +39,24 @@ def graph_get_leverage_positions(
     response = graph_client.execute(query, params)
     result = []
     for data in response['leverageStrategyPositions']:  # pylint: disable=unsubscriptable-object
-        result.append(
-            LeveragePosition(
-                vault=Web3.to_checksum_address(data['vault']['id']),
-                user=Web3.to_checksum_address(data['user']),
-                proxy=Web3.to_checksum_address(data['proxy']),
-            )
+        position = LeveragePosition(
+            vault=Web3.to_checksum_address(data['vault']['id']),
+            user=Web3.to_checksum_address(data['user']),
+            proxy=Web3.to_checksum_address(data['proxy']),
         )
+        if data['exitRequest']:
+            request_data = data['exitRequest']
+            exit_request = ExitRequest(
+                position_ticket=request_data['positionTicket'],
+                timestamp=request_data['timestamp'],
+                exit_queue_index=request_data['exitQueueIndex'],
+                is_claimable=request_data['isClaimable'],
+                exited_assets=request_data['exitedAssets'],
+                total_assets=request_data['totalAssets'],
+            )
+            position.exit_request = exit_request
+
+        result.append(position)
     return result
 
 
