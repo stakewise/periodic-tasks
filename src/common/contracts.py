@@ -1,9 +1,13 @@
 import json
 import logging
 
-from eth_typing import ChecksumAddress
+from eth_typing import ChecksumAddress, HexStr
+from hexbytes import HexBytes
 from web3 import Web3
 from web3.contract.contract import ContractEvents, ContractFunctions
+from web3.types import Wei
+
+from .typings import HarvestParams
 
 logger = logging.getLogger(__name__)
 
@@ -24,3 +28,12 @@ class ContractWrapper:
     @property
     def events(self) -> ContractEvents:
         return self.contract.events
+
+    def encode_abi(self, fn_name: str, args: list | None = None) -> HexStr:
+        return self.contract.encodeABI(fn_name=fn_name, args=args)
+
+    @staticmethod
+    def _get_zero_harvest_params() -> HarvestParams:
+        return HarvestParams(
+            rewards_root=HexBytes(b'\x00' * 32), reward=Wei(0), unlocked_mev_reward=Wei(0), proof=[]
+        )

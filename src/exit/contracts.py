@@ -2,7 +2,7 @@ import logging
 
 from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
-from web3.types import Wei
+from web3.types import BlockNumber, HexStr, Wei
 
 from src.common.contracts import ContractWrapper
 from src.common.settings import network_config
@@ -15,8 +15,8 @@ ABI_DIR = 'src/exit/abi'
 
 
 class LeverageStrategyContract(ContractWrapper):
-    def can_force_enter_exit_queue(self, vault: ChecksumAddress, user: ChecksumAddress) -> bool:
-        return self.contract.functions.canForceEnterExitQueue(vault, user).call()
+    def strategy_id(self) -> str:
+        return self.contract.functions.strategyId().call()
 
     def force_enter_exit_queue(
         self,
@@ -46,9 +46,49 @@ class OsTokenVaultEscrowContract(ContractWrapper):
         ).transact()
 
 
+class StrategiesRegistryContract(ContractWrapper):
+    def get_vault_ltv_percent(self, strategy_id: str) -> int:
+        return self.contract.functions.getStrategyConfig(
+            strategy_id, 'vaultForceExitLtvPercent'
+        ).call()
+
+    def get_borrow_ltv_percent(self, strategy_id: str) -> int:
+        return self.contract.functions.getStrategyConfig(
+            strategy_id, 'borrowForceExitLtvPercent'
+        ).call()
+
+
+class VaultContract(ContractWrapper):
+    ...
+
+
+class KeeperContract(ContractWrapper):
+    abi_path = 'abi/IKeeper.json'
+
+    async def can_harvest(
+        self, vault: ChecksumAddress, block_number: BlockNumber | None = None
+    ) -> bool:
+        return await self.contract.functions.canHarvest(vault).call(block_identifier=block_number)
+
+
+class MulticallContract(ContractWrapper):
+    def aggregate(
+        self,
+        data: list[tuple[ChecksumAddress, HexStr]],
+        block_number: BlockNumber | None = None,
+    ) -> tuple[BlockNumber, list]:
+        return self.contract.functions.aggregate(data).call(block_identifier=block_number)
+
+
 leverage_strategy_contract = LeverageStrategyContract(
     abi_path=f'{ABI_DIR}/ILeverageStrategy.json',
     address=network_config.LEVERAGE_STRATEGY_CONTRACT_ADDRESS,
+    client=execution_client,
+)
+
+strategy_registry_contract = StrategiesRegistryContract(
+    abi_path=f'{ABI_DIR}/IStrategyRegistry.json',
+    address=network_config.STRATEGY_REGISTRY_CONTRACT_ADDRESS,
     client=execution_client,
 )
 
@@ -57,3 +97,23 @@ ostoken_vault_escrow_contract = OsTokenVaultEscrowContract(
     address=network_config.OSTOKEN_ESCROW_CONTRACT_ADDRESS,
     client=execution_client,
 )
+
+keeper_contract = KeeperContract(
+    abi_path=f'{ABI_DIR}/IKeeper.json',
+    address=network_config.KEEPER_CONTRACT_ADDRESS,
+    client=execution_client,
+)
+
+multicall_contract = MulticallContract(
+    abi_path=f'{ABI_DIR}/Multicall.json',
+    address=network_config.MULTICALL_CONTRACT_ADDRESS,
+    client=execution_client,
+)
+
+
+def get_vault_contract(address: ChecksumAddress) -> VaultContract:
+    return VaultContract(
+        abi_path=f'{ABI_DIR}/IEthVault.json',
+        address=address,
+        client=execution_client,
+    )

@@ -6,8 +6,9 @@ from hexbytes import HexBytes
 from web3 import Web3
 from web3.types import Wei
 
+from src.common.typings import HarvestParams
+
 from .clients import graph_client
-from .typings import HarvestParams
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

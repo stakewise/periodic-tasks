@@ -6,12 +6,15 @@ from .clients import graph_client
 from .typings import LeveragePosition, OsTokenExitRequest
 
 
-def graph_get_leverage_positions(block_number: BlockNumber) -> list[LeveragePosition]:
+def graph_get_leverage_positions(
+    borrow_ltv: int, block_number: BlockNumber
+) -> list[LeveragePosition]:
     query = gql(
         """
-        query PositionsQuery($block: BigInt) {
+        query PositionsQuery($borrowLTV: String, $block: BigInt) {
           leverageStrategyPositions(
             block: { number: $block },
+            where: { borrowLtv_gt: $borrowLTV },
             orderBy: borrowLtv,
             orderDirection: desc
           ) {
@@ -24,7 +27,7 @@ def graph_get_leverage_positions(block_number: BlockNumber) -> list[LeveragePosi
         }
         """
     )
-    params = {'block': block_number}
+    params = {'block': block_number, 'borrowLTV': str(borrow_ltv)}
     response = graph_client.execute(query, params)
     result = []
     for data in response['leverageStrategyPositions']:  # pylint: disable=unsubscriptable-object
@@ -39,14 +42,14 @@ def graph_get_leverage_positions(block_number: BlockNumber) -> list[LeveragePosi
 
 
 def graph_get_allocators(
-    addresses: list[ChecksumAddress], block_number: BlockNumber
+    ltv: int, addresses: list[ChecksumAddress], block_number: BlockNumber
 ) -> list[ChecksumAddress]:
     query = gql(
         """
-        query AllocatorsQuery($addresses: [String], $block: BigInt) {
+        query AllocatorsQuery($ltv: String, $addresses: [String], $block: BigInt) {
           allocators(
             block: { number: $block },
-            where: {address_in: $addresses},
+            where: { ltv_gt: $ltv, address_in: $addresses },
             orderBy: ltv,
             orderDirection: desc
           ) {
@@ -55,7 +58,11 @@ def graph_get_allocators(
         }
         """
     )
-    params = {'addresses': [address.lower() for address in addresses], 'block': block_number}
+    params = {
+        'ltv': ltv,
+        'addresses': [address.lower() for address in addresses],
+        'block': block_number,
+    }
     response = graph_client.execute(query, params)
     result = []
     for data in response['allocators']:  # pylint: disable=unsubscriptable-object

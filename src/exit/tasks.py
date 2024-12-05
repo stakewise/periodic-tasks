@@ -2,11 +2,22 @@ import logging
 
 from eth_typing import ChecksumAddress, HexStr
 from web3 import Web3
+from web3.types import BlockNumber
 
 from src.common.settings import EXECUTION_TRANSACTION_TIMEOUT
+from src.common.typings import HarvestParams
+from src.ltv.graph import graph_get_harvest_params
 
 from .clients import execution_client
-from .contracts import leverage_strategy_contract, ostoken_vault_escrow_contract
+from .contracts import (
+    VaultContract,
+    get_vault_contract,
+    keeper_contract,
+    leverage_strategy_contract,
+    multicall_contract,
+    ostoken_vault_escrow_contract,
+    strategy_registry_contract,
+)
 from .graph import (
     graph_get_allocators,
     graph_get_leverage_positions,
@@ -26,14 +37,29 @@ def force_exits() -> None:
     logger.debug('Current block: %d', block['number'])
     block_number = block['number']
     # force exit leverage positions
-    leverage_positions = graph_get_leverage_positions(block_number=block_number)
+
+    strategy_id = leverage_strategy_contract.strategy_id()
+    borrow_ltv = strategy_registry_contract.get_borrow_ltv_percent(strategy_id)
+    vault_ltv = strategy_registry_contract.get_vault_ltv_percent(strategy_id)
+
+    leverage_positions = graph_get_leverage_positions(
+        borrow_ltv=borrow_ltv, block_number=block_number
+    )
     logger.info('Checking %d leverage positions...', len(leverage_positions))
 
+    vault_to_harvest_params: dict[ChecksumAddress, HarvestParams | None] = {}
     # check by position borrow ltv
     for position in leverage_positions:
-        if leverage_strategy_contract.can_force_enter_exit_queue(
+        harvest_params = vault_to_harvest_params.get(position.vault)
+        if not harvest_params:
+            harvest_params = graph_get_harvest_params(position.vault)
+            vault_to_harvest_params[position.vault] = harvest_params
+
+        if can_force_enter_exit_queue(
             vault=position.vault,
             user=position.user,
+            harvest_params=harvest_params,
+            block_number=block_number,
         ):
             logger.info(
                 'Force exiting leverage positions: vault=%s, user=%s...',
@@ -50,21 +76,27 @@ def force_exits() -> None:
                     position.vault,
                     position.user,
                 )
-        else:
-            # position sorted by ltv and next will have lower ltv
-            break
 
     # check by position proxy ltv
     proxy_to_position = {position.proxy: position for position in leverage_positions}
-    allocators = graph_get_allocators(list(proxy_to_position.keys()), block_number=block_number)
+    allocators = graph_get_allocators(
+        ltv=vault_ltv, addresses=list(proxy_to_position.keys()), block_number=block_number
+    )
     leverage_positions_by_ltv = []
     for allocator in allocators:
         leverage_positions_by_ltv.append(proxy_to_position[allocator])
 
     for position in leverage_positions_by_ltv:
-        if leverage_strategy_contract.can_force_enter_exit_queue(
+        harvest_params = vault_to_harvest_params.get(position.vault)
+        if not harvest_params:
+            harvest_params = graph_get_harvest_params(position.vault)
+            vault_to_harvest_params[position.vault] = harvest_params
+
+        if can_force_enter_exit_queue(
             vault=position.vault,
             user=position.user,
+            harvest_params=harvest_params,
+            block_number=block_number,
         ):
             logger.info(
                 'Force exiting leverage positions: vault=%s, user=%s...',
@@ -80,9 +112,6 @@ def force_exits() -> None:
                 position.vault,
                 position.user,
             )
-        else:
-            # position sorted by ltv and next will have lower ltv
-            break
 
     # force claim for exit positions
     max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent()
@@ -106,6 +135,49 @@ def force_exits() -> None:
             exit_request.vault,
             exit_request.owner,
         )
+
+
+def _encode_update_state_call(
+    vault_contract: VaultContract, harvest_params: HarvestParams
+) -> HexStr:
+    return vault_contract.encode_abi(
+        fn_name='updateState',
+        args=[
+            (
+                harvest_params.rewards_root,
+                harvest_params.reward,
+                harvest_params.unlocked_mev_reward,
+                harvest_params.proof,
+            )
+        ],
+    )
+
+
+def can_force_enter_exit_queue(
+    vault: ChecksumAddress,
+    user: ChecksumAddress,
+    harvest_params: HarvestParams | None,
+    block_number: BlockNumber,
+) -> bool:
+    vault_contract = get_vault_contract(vault)
+    calls = []
+    update_state_call = None
+    if harvest_params and keeper_contract.can_harvest(vault, block_number):
+        update_state_call = (
+            vault,
+            _encode_update_state_call(vault_contract, harvest_params),
+        )
+        calls.append(update_state_call)
+
+    can_force_enter_exit_queue_call = leverage_strategy_contract.encode_abi(
+        fn_name='canForceEnterExitQueue', args=[vault, user]
+    )
+    calls.append((leverage_strategy_contract.address, can_force_enter_exit_queue_call))
+    # fetch data
+    _, response = multicall_contract.aggregate(calls, block_number)
+    if update_state_call:
+        response.pop(0)
+    return bool(Web3.to_int(response.pop(0)))
 
 
 def _force_enter_exit_queue(vault: ChecksumAddress, user: ChecksumAddress) -> HexStr | None:
