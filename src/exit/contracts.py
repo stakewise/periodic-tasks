@@ -2,6 +2,7 @@ import logging
 
 from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
+from web3 import Web3
 from web3.types import BlockNumber, HexStr, Wei
 
 from src.common.contracts import ContractWrapper
@@ -48,14 +49,16 @@ class OsTokenVaultEscrowContract(ContractWrapper):
 
 class StrategiesRegistryContract(ContractWrapper):
     def get_vault_ltv_percent(self, strategy_id: str) -> int:
-        return self.contract.functions.getStrategyConfig(
+        value = self.contract.functions.getStrategyConfig(
             strategy_id, 'vaultForceExitLtvPercent'
         ).call()
+        return Web3.to_int(value)
 
     def get_borrow_ltv_percent(self, strategy_id: str) -> int:
-        return self.contract.functions.getStrategyConfig(
+        value = self.contract.functions.getStrategyConfig(
             strategy_id, 'borrowForceExitLtvPercent'
         ).call()
+        return Web3.to_int(value)
 
 
 class VaultContract(ContractWrapper):
@@ -65,10 +68,8 @@ class VaultContract(ContractWrapper):
 class KeeperContract(ContractWrapper):
     abi_path = 'abi/IKeeper.json'
 
-    async def can_harvest(
-        self, vault: ChecksumAddress, block_number: BlockNumber | None = None
-    ) -> bool:
-        return await self.contract.functions.canHarvest(vault).call(block_identifier=block_number)
+    def can_harvest(self, vault: ChecksumAddress, block_number: BlockNumber | None = None) -> bool:
+        return self.contract.functions.canHarvest(vault).call(block_identifier=block_number)
 
 
 class MulticallContract(ContractWrapper):

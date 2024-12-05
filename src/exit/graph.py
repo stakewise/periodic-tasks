@@ -7,11 +7,11 @@ from .typings import LeveragePosition, OsTokenExitRequest
 
 
 def graph_get_leverage_positions(
-    borrow_ltv: int, block_number: BlockNumber
+    borrow_ltv: float, block_number: BlockNumber
 ) -> list[LeveragePosition]:
     query = gql(
         """
-        query PositionsQuery($borrowLTV: String, $block: BigInt) {
+        query PositionsQuery($block: Int, $borrowLTV: String) {
           leverageStrategyPositions(
             block: { number: $block },
             where: { borrowLtv_gt: $borrowLTV },
@@ -42,11 +42,11 @@ def graph_get_leverage_positions(
 
 
 def graph_get_allocators(
-    ltv: int, addresses: list[ChecksumAddress], block_number: BlockNumber
+    ltv: float, addresses: list[ChecksumAddress], block_number: BlockNumber
 ) -> list[ChecksumAddress]:
     query = gql(
         """
-        query AllocatorsQuery($ltv: String, $addresses: [String], $block: BigInt) {
+        query AllocatorsQuery($ltv: String, $addresses: [String], $block: Int) {
           allocators(
             block: { number: $block },
             where: { ltv_gt: $ltv, address_in: $addresses },
@@ -59,7 +59,7 @@ def graph_get_allocators(
         """
     )
     params = {
-        'ltv': ltv,
+        'ltv': str(ltv),
         'addresses': [address.lower() for address in addresses],
         'block': block_number,
     }
@@ -75,7 +75,7 @@ def graph_get_allocators(
 def graph_ostoken_exit_requests(ltv: int, block_number: BlockNumber) -> list[OsTokenExitRequest]:
     query = gql(
         """
-        query ExitRequestsQuery($ltv: String, $block: BigInt) {
+        query ExitRequestsQuery($ltv: String, $block: Int) {
           osTokenExitRequests(
             block: { number: $block },
             where: {ltv_gt: $ltv}

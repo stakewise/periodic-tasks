@@ -25,7 +25,7 @@ class PriceNetworkConfig:
     PRICE_FEED_SENDER_CONTRACT_ADDRESS: ChecksumAddress
 
 
-PRICE_NETWORKS: dict[str, PriceNetworkConfig] = {
+PRICE_NETWORKS: dict[str, PriceNetworkConfig | None] = {
     MAINNET: PriceNetworkConfig(
         # TARGET_CHAIN is not what eth_chainId returns.
         # It is internal id used in PriceFeedSender contract.
@@ -41,6 +41,9 @@ PRICE_NETWORKS: dict[str, PriceNetworkConfig] = {
             '0xf7d4e7273e5015c96728a6b02f31c505ee184603'
         ),
     ),
+    HOLESKY: None,
+    GNOSIS: None,
+    CHIADO: None,
     SEPOLIA: PriceNetworkConfig(
         # TARGET_CHAIN is not what eth_chainId returns.
         # It is internal id used in PriceFeedSender contract.

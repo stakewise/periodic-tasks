@@ -1,6 +1,6 @@
 from src.common.contracts import ContractWrapper
-from src.common.settings import price_network_config
 from src.price.clients import sender_execution_client, target_execution_client
+from src.price.settings import price_network_config
 
 ABI_DIR = 'src/price/abi'
 

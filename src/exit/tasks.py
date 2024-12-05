@@ -27,6 +27,8 @@ from .graph import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+WAD = 10**18
+
 
 def force_exits() -> None:
     """
@@ -36,11 +38,15 @@ def force_exits() -> None:
     block = execution_client.eth.get_block('finalized')
     logger.debug('Current block: %d', block['number'])
     block_number = block['number']
-    # force exit leverage positions
+    handle_leverage_postions(block_number)
+    handel_exit_position(block_number)
 
+
+def handle_leverage_postions(block_number: BlockNumber) -> None:
+    # force exit leverage positions
     strategy_id = leverage_strategy_contract.strategy_id()
-    borrow_ltv = strategy_registry_contract.get_borrow_ltv_percent(strategy_id)
-    vault_ltv = strategy_registry_contract.get_vault_ltv_percent(strategy_id)
+    borrow_ltv = strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
+    vault_ltv = strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
 
     leverage_positions = graph_get_leverage_positions(
         borrow_ltv=borrow_ltv, block_number=block_number
@@ -103,16 +109,19 @@ def force_exits() -> None:
                 position.vault,
                 position.user,
             )
-            leverage_strategy_contract.force_enter_exit_queue(
+            tx_hash = _force_enter_exit_queue(
                 vault=position.vault,
                 user=position.user,
             )
-            logger.info(
-                'Successfully exited leverage positions: vault=%s, user=%s...',
-                position.vault,
-                position.user,
-            )
+            if tx_hash:
+                logger.info(
+                    'Successfully exited leverage positions: vault=%s, user=%s...',
+                    position.vault,
+                    position.user,
+                )
 
+
+def handel_exit_position(block_number: BlockNumber) -> None:
     # force claim for exit positions
     max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent()
     max_ltv_percent = max_ltv_percent // 10**18 * 100
