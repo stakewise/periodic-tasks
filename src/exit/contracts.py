@@ -66,9 +66,7 @@ class VaultContract(ContractWrapper):
 
 
 class KeeperContract(ContractWrapper):
-    abi_path = 'abi/IKeeper.json'
-
-    def can_harvest(self, vault: ChecksumAddress, block_number: BlockNumber | None = None) -> bool:
+    def can_harvest(self, vault: ChecksumAddress, block_number: BlockNumber) -> bool:
         return self.contract.functions.canHarvest(vault).call(block_identifier=block_number)
 
 

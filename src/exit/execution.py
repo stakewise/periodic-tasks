@@ -43,7 +43,6 @@ def can_force_enter_exit_queue(
         fn_name='canForceEnterExitQueue', args=[vault, user]
     )
     calls.append((leverage_strategy_contract.address, can_force_enter_exit_queue_call))
-    # fetch data
     _, response = multicall_contract.aggregate(calls, block_number)
     if update_state_call:
         response.pop(0)
