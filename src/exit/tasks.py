@@ -14,9 +14,8 @@ from .contracts import (
 )
 from .execution import (
     can_force_enter_exit_queue,
+    claim_exited_assets,
     force_enter_exit_queue,
-    os_token_claim_exited_assets,
-    vault_claim_exited_assets,
 )
 from .graph import (
     graph_get_allocators,
@@ -48,7 +47,6 @@ def handle_leverage_positions(block_number: BlockNumber) -> None:
     strategy_id = leverage_strategy_contract.strategy_id()
     borrow_ltv = strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
     vault_ltv = strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
-
     leverage_positions = graph_get_leverage_positions(
         borrow_ltv=borrow_ltv, block_number=block_number
     )
@@ -94,22 +92,39 @@ def handel_exit_position(block_number: BlockNumber) -> None:
     """Process osTokenExitRequests from graph and claim exited assets."""
     # force claim for exit positions
     max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent()
-    max_ltv_percent = max_ltv_percent // 10**18 * 100
+    max_ltv_percent = max_ltv_percent // WAD
     exit_requests = graph_ostoken_exit_requests(max_ltv_percent, block_number=block_number)
-    logger.info('Force assets claim for %d exit requests...', len(exit_requests))
+    exit_requests = [
+        exit_request for exit_request in exit_requests if exit_request.exit_request.can_be_claimed
+    ]
 
-    for exit_request in exit_requests:
+    logger.info('Force assets claim for %d exit requests...', len(exit_requests))
+    vault_to_harvest_params: dict[ChecksumAddress, HarvestParams | None] = {}
+
+    for os_token_exit_request in exit_requests:
+        vault = os_token_exit_request.vault
+        harvest_params = vault_to_harvest_params.get(vault)
+        if not harvest_params:
+            harvest_params = graph_get_harvest_params(vault)
+            vault_to_harvest_params[vault] = harvest_params
+
         logger.info(
             'Claiming exited assets: vault=%s, user=%s...',
-            exit_request.vault,
-            exit_request.owner,
+            vault,
+            os_token_exit_request.owner,
         )
-        tx_hash = os_token_claim_exited_assets(exit_request)
+        tx_hash = claim_exited_assets(
+            vault=vault,
+            user=os_token_exit_request.owner,
+            exit_request=os_token_exit_request.exit_request,
+            harvest_params=harvest_params,
+            block_number=block_number,
+        )
         if tx_hash:
             logger.info(
                 'Successfully claimed exited assets: vault=%s, user=%s...',
-                exit_request.vault,
-                exit_request.owner,
+                vault,
+                os_token_exit_request.owner,
             )
 
 
@@ -118,7 +133,7 @@ def handle_leverage_position(
 ) -> None:
     """
     Submit force exit for leverage postion.
-    Also check for position active exit request and claim assets is we can.
+    Also check for position active exit request and claim assets is possible.
     """
     if not can_force_enter_exit_queue(
         vault=position.vault,
@@ -127,6 +142,7 @@ def handle_leverage_position(
         block_number=block_number,
     ):
         return
+
     # claim active exit request
     if position.exit_request and position.exit_request.can_be_claimed:
         logger.info(
@@ -134,8 +150,10 @@ def handle_leverage_position(
             position.vault,
             position.user,
         )
-        tx_hash = vault_claim_exited_assets(
-            position=position,
+        tx_hash = claim_exited_assets(
+            vault=position.vault,
+            user=position.user,
+            exit_request=position.exit_request,
             harvest_params=harvest_params,
             block_number=block_number,
         )
@@ -155,6 +173,8 @@ def handle_leverage_position(
     tx_hash = force_enter_exit_queue(
         vault=position.vault,
         user=position.user,
+        harvest_params=harvest_params,
+        block_number=block_number,
     )
     if tx_hash:
         logger.info(

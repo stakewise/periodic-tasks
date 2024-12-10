@@ -1,9 +1,8 @@
 import logging
 
 from eth_typing import ChecksumAddress
-from hexbytes import HexBytes
 from web3 import Web3
-from web3.types import BlockNumber, HexStr, Wei
+from web3.types import BlockNumber, HexStr
 
 from src.common.contracts import ContractWrapper
 from src.common.settings import network_config
@@ -19,32 +18,10 @@ class LeverageStrategyContract(ContractWrapper):
     def strategy_id(self) -> str:
         return self.contract.functions.strategyId().call()
 
-    def force_enter_exit_queue(
-        self,
-        vault: ChecksumAddress,
-        user: ChecksumAddress,
-    ) -> HexBytes:
-        return self.contract.functions.forceEnterExitQueue(
-            vault,
-            user,
-        ).transact()
-
 
 class OsTokenVaultEscrowContract(ContractWrapper):
     def liq_threshold_percent(self) -> int:
         return self.contract.functions.liqThresholdPercent().call()
-
-    def claim_exited_assets(
-        self,
-        vault: ChecksumAddress,
-        exit_position_ticket: int,
-        os_token_shares: Wei,
-    ) -> HexBytes:
-        return self.contract.functions.claimExitedAssets(
-            vault,
-            exit_position_ticket,
-            os_token_shares,
-        ).transact()
 
 
 class StrategiesRegistryContract(ContractWrapper):
@@ -59,10 +36,6 @@ class StrategiesRegistryContract(ContractWrapper):
             strategy_id, 'borrowForceExitLtvPercent'
         ).call()
         return Web3.to_int(value)
-
-
-class VaultContract(ContractWrapper):
-    ...
 
 
 class KeeperContract(ContractWrapper):
@@ -108,11 +81,3 @@ multicall_contract = MulticallContract(
     address=network_config.MULTICALL_CONTRACT_ADDRESS,
     client=execution_client,
 )
-
-
-def get_vault_contract(address: ChecksumAddress) -> VaultContract:
-    return VaultContract(
-        abi_path=f'{ABI_DIR}/IEthVault.json',
-        address=address,
-        client=execution_client,
-    )

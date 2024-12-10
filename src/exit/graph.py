@@ -3,7 +3,7 @@ from typing import Any
 from gql import gql
 from graphql import DocumentNode
 from web3 import Web3
-from web3.types import BlockNumber, ChecksumAddress, Wei
+from web3.types import BlockNumber, ChecksumAddress
 
 from src.common.settings import GRAPH_PAGE_SIZE
 
@@ -49,6 +49,7 @@ def graph_get_leverage_positions(
               id
             }
             exitRequest {
+              id
               positionTicket
               timestamp
               exitQueueIndex
@@ -70,16 +71,7 @@ def graph_get_leverage_positions(
             proxy=Web3.to_checksum_address(data['proxy']),
         )
         if data['exitRequest']:
-            request_data = data['exitRequest']
-            exit_request = ExitRequest(
-                position_ticket=request_data['positionTicket'],
-                timestamp=request_data['timestamp'],
-                exit_queue_index=request_data['exitQueueIndex'],
-                is_claimable=request_data['isClaimable'],
-                exited_assets=request_data['exitedAssets'],
-                total_assets=request_data['totalAssets'],
-            )
-            position.exit_request = exit_request
+            position.exit_request = ExitRequest.from_graph(data['exitRequest'])
 
         result.append(position)
     return result
@@ -134,6 +126,7 @@ def graph_ostoken_exit_requests(ltv: int, block_number: BlockNumber) -> list[OsT
             first: $first
             skip: $skip
             ) {
+            id
             owner
             ltv
             positionTicket
@@ -147,15 +140,52 @@ def graph_ostoken_exit_requests(ltv: int, block_number: BlockNumber) -> list[OsT
     )
     params = {'ltv': str(ltv), 'block': block_number}
     response = paginate_query(query, params)
+
+    exit_requests = graph_get_exit_requests(
+        ids=[item['id'] for item in response], block_number=block_number
+    )
+    id_to_exit_request = {exit.id: exit for exit in exit_requests}
+
     result = []
     for data in response:
         result.append(
             OsTokenExitRequest(
+                id=data['id'],
                 vault=Web3.to_checksum_address(data['vault']['id']),
                 owner=Web3.to_checksum_address(data['owner']),
-                os_token_shares=Wei(int(data['osTokenShares'])),
                 ltv=data['ltv'],
-                position_ticket=int(data['positionTicket']),
+                exit_request=id_to_exit_request[data['id']],
             )
         )
+
+    return result
+
+
+def graph_get_exit_requests(ids: list[str], block_number: BlockNumber) -> list[ExitRequest]:
+    query = gql(
+        """
+        query exitRequestQuery($ids: [String], $block: Int, $first: Int, $skip: Int) {
+          exitRequests(
+            block: { number: $block },
+            where: { id_in: $ids },
+            orderBy: id,
+            first: $first,
+            skip: $skip
+          ) {
+            id
+            positionTicket
+            timestamp
+            exitQueueIndex
+            isClaimable
+            exitedAssets
+            totalAssets
+          }
+        }
+        """
+    )
+    params = {'block': block_number, 'ids': ids}
+    response = paginate_query(query, params)
+    result = []
+    for data in response:
+        result.append(ExitRequest.from_graph(data))
     return result
