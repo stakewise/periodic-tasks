@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 WAD = 10**18
 
 
-def update_vault_max_ltv_user() -> None:
+async def update_vault_max_ltv_user() -> None:
     """
     Finds user having maximum LTV in given vault and submits this user in the LTV Tracker contract.
     """
@@ -27,21 +27,21 @@ def update_vault_max_ltv_user() -> None:
 
     block = execution_client.eth.get_block('finalized')
     logger.debug('Current block: %d', block['number'])
-    ostoken_vaults = graph_get_ostoken_vaults()
+    ostoken_vaults = await graph_get_ostoken_vaults()
     for vault in ostoken_vaults:
-        handle_vault(vault)
+        await handle_vault(vault)
 
     logger.info('Completed')
 
 
-def handle_vault(vault: ChecksumAddress) -> None:
-    max_ltv_user = graph_get_vault_max_ltv_allocator(vault)
+async def handle_vault(vault: ChecksumAddress) -> None:
+    max_ltv_user = await graph_get_vault_max_ltv_allocator(vault)
     if max_ltv_user is None:
         logger.warning('No allocators in vault %s', vault)
         return
     logger.info('max LTV user for vault %s is %s', vault, max_ltv_user)
 
-    harvest_params = graph_get_harvest_params(vault)
+    harvest_params = await graph_get_harvest_params(vault)
     logger.debug('Harvest params for vault %s: %s', vault, harvest_params)
 
     # Get current LTV

@@ -67,13 +67,14 @@ def claim_exited_assets(
     try:
         tx = multicall_contract.functions.aggregate(calls).transact()
     except Exception as e:
-        logger.error(
-            'Failed to claim exited assets; vault=%s, position_ticket=%s %s: ',
+        logger.info(
+            'Failed to claim exited assets for leverage positions: vault=%s, user=%s %s...',
             vault,
-            exit_request.position_ticket,
+            user,
             e,
         )
         logger.exception(e)
+
         return None
 
     tx_hash = Web3.to_hex(tx)
@@ -82,7 +83,11 @@ def claim_exited_assets(
         tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
     )
     if not tx_receipt['status']:
-        logger.error('Exited assets claim transaction failed')
+        logger.info(
+            'Failed to claim exited assets for leverage positions: vault=%s, user=%s...',
+            vault,
+            user,
+        )
         return None
 
     return tx_hash
