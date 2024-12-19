@@ -15,6 +15,7 @@ def get_execution_client(endpoint: str, account: LocalAccount | None = None) -> 
     client = Web3(Web3.HTTPProvider(endpoint))
     if account:
         client.middleware_onion.add(construct_sign_and_send_raw_middleware(account))
+        client.eth.default_account = account.address
     return client
 
 
