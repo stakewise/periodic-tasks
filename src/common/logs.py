@@ -1,6 +1,6 @@
 import logging
 
-from gql.transport.requests import log as requests_logger
+from gql.transport.aiohttp import log as requests_logger
 
 
 def setup_gql_log_level() -> None:
