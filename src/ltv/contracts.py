@@ -3,14 +3,12 @@ import logging
 from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
 from web3 import Web3
-from web3.types import Wei
 
-from src.common.clients import hot_wallet_account
 from src.common.contracts import ContractWrapper
 from src.common.settings import network_config
+from src.common.typings import HarvestParams
 
 from .clients import execution_client
-from .typings import HarvestParams
 
 logger = logging.getLogger(__name__)
 
@@ -55,13 +53,7 @@ class VaultUserLTVTrackerContract(ContractWrapper):
                 harvest_params.unlocked_mev_reward,
                 harvest_params.proof,
             ),
-        ).transact({'from': hot_wallet_account.address})
-
-    @staticmethod
-    def _get_zero_harvest_params() -> HarvestParams:
-        return HarvestParams(
-            rewards_root=HexBytes(b'\x00' * 32), reward=Wei(0), unlocked_mev_reward=Wei(0), proof=[]
-        )
+        ).transact()
 
 
 vault_user_ltv_tracker_contract = VaultUserLTVTrackerContract(
