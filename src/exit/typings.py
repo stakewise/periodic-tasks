@@ -38,7 +38,12 @@ class LeveragePosition:
     user: ChecksumAddress
     vault: ChecksumAddress
     proxy: ChecksumAddress
+    borrow_ltv: float
     exit_request: ExitRequest | None = None
+
+    @property
+    def id(self) -> str:
+        return f'{self.vault}-{self.user}'
 
 
 @dataclass

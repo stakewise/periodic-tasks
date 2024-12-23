@@ -9,15 +9,12 @@ from .clients import graph_client
 from .typings import ExitRequest, LeveragePosition, OsTokenExitRequest
 
 
-async def graph_get_leverage_positions(
-    borrow_ltv: float, block_number: BlockNumber
-) -> list[LeveragePosition]:
+async def graph_get_leverage_positions(block_number: BlockNumber) -> list[LeveragePosition]:
     query = gql(
         """
-        query PositionsQuery($borrowLTV: String, $block: Int, $first: Int, $skip: Int) {
+        query PositionsQuery($block: Int, $first: Int, $skip: Int) {
           leverageStrategyPositions(
             block: { number: $block },
-            where: { borrowLtv_gt: $borrowLTV },
             orderBy: borrowLtv,
             orderDirection: desc,
             first: $first,
@@ -25,10 +22,12 @@ async def graph_get_leverage_positions(
           ) {
             user
             proxy
+            borrowLtv
             vault {
               id
             }
             exitRequest {
+              id
               positionTicket
               timestamp
               exitQueueIndex
@@ -40,7 +39,7 @@ async def graph_get_leverage_positions(
         }
         """
     )
-    params = {'block': block_number, 'borrowLTV': str(borrow_ltv)}
+    params = {'block': block_number}
     response = await graph_client.fetch_pages(query, params=params)
     result = []
     for data in response:
@@ -48,6 +47,7 @@ async def graph_get_leverage_positions(
             vault=Web3.to_checksum_address(data['vault']['id']),
             user=Web3.to_checksum_address(data['user']),
             proxy=Web3.to_checksum_address(data['proxy']),
+            borrow_ltv=float(data['borrowLtv']),
         )
         if data['exitRequest']:
             position.exit_request = ExitRequest.from_graph(data['exitRequest'])

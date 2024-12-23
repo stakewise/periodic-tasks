@@ -47,32 +47,11 @@ async def handle_leverage_positions(block_number: BlockNumber) -> None:
     strategy_id = leverage_strategy_contract.strategy_id()
     borrow_ltv = strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
     vault_ltv = strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
-    leverage_positions = await graph_get_leverage_positions(
-        borrow_ltv=borrow_ltv, block_number=block_number
-    )
-    logger.info('Checking %d leverage positions...', len(leverage_positions))
-
-    vault_to_harvest_params: dict[ChecksumAddress, HarvestParams | None] = {}
-    # check by position borrow ltv
-    for position in leverage_positions:
-        harvest_params = vault_to_harvest_params.get(position.vault)
-        if not harvest_params:
-            harvest_params = await graph_get_harvest_params(position.vault)
-            vault_to_harvest_params[position.vault] = harvest_params
-
-        handle_leverage_position(
-            position=position,
-            harvest_params=harvest_params,
-            block_number=block_number,
-        )
-
-    # check by position proxy ltv
-
-    # refetch leverage positions  # todo: should be next block
-    leverage_positions = await graph_get_leverage_positions(
-        borrow_ltv=borrow_ltv, block_number=block_number
-    )
-    proxy_to_position = {position.proxy: position for position in leverage_positions}
+    all_leverage_positions = await graph_get_leverage_positions(block_number=block_number)
+    # Get positions by borrow ltv
+    borrow_ltv_positions = [pos for pos in all_leverage_positions if pos.borrow_ltv > borrow_ltv]
+    # Get vault position by vault ltv
+    proxy_to_position = {position.proxy: position for position in all_leverage_positions}
     allocators = await graph_get_allocators(
         ltv=vault_ltv, addresses=list(proxy_to_position.keys()), block_number=block_number
     )
@@ -80,7 +59,19 @@ async def handle_leverage_positions(block_number: BlockNumber) -> None:
     for allocator in allocators:
         leverage_positions_by_ltv.append(proxy_to_position[allocator])
 
+    # join positions
+    leverage_positions = []
+    leverage_positions.extend(borrow_ltv_positions)
+    borrow_ltv_positions_ids = [pos.id for pos in borrow_ltv_positions]
     for position in leverage_positions_by_ltv:
+        if position.id not in borrow_ltv_positions_ids:
+            leverage_positions.append(position)
+
+    logger.info('Checking %d leverage positions...', len(leverage_positions))
+
+    vault_to_harvest_params: dict[ChecksumAddress, HarvestParams | None] = {}
+    # check by position borrow ltv
+    for position in leverage_positions:
         harvest_params = vault_to_harvest_params.get(position.vault)
         if not harvest_params:
             harvest_params = await graph_get_harvest_params(position.vault)
