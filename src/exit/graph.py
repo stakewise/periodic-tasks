@@ -4,8 +4,9 @@ from web3 import Web3
 from web3.types import BlockNumber, ChecksumAddress
 
 from src.common.graph import get_harvest_params
-from src.common.typings import HarvestParams
 from src.common.settings import NETWORK
+from src.common.typings import HarvestParams
+
 from .clients import graph_client
 from .typings import ExitRequest, LeveragePosition, OsTokenExitRequest
 

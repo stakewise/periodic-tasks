@@ -65,7 +65,7 @@ def claim_exited_assets(
     )
     calls.append((leverage_strategy_contract.address, claim_call))
     try:
-        tx = multicall_contract.aggregate(calls).transact()
+        tx = multicall_contract.functions.aggregate(calls).transact()
     except Exception as e:
         logger.error(
             'Failed to claim exited assets for leverage position: vault=%s, user=%s %s...',

@@ -91,8 +91,7 @@ async def handle_leverage_positions(block_number: BlockNumber) -> None:
 async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
     """Process osTokenExitRequests from graph and claim exited assets."""
     # force claim for exit positions
-    max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent()
-    max_ltv_percent = max_ltv_percent / WAD
+    max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent() / WAD
     exit_requests = await graph_ostoken_exit_requests(max_ltv_percent, block_number=block_number)
     exit_requests = [
         exit_request for exit_request in exit_requests if exit_request.exit_request.can_be_claimed
