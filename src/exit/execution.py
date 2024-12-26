@@ -65,10 +65,10 @@ def claim_exited_assets(
     )
     calls.append((leverage_strategy_contract.address, claim_call))
     try:
-        tx = multicall_contract.functions.aggregate(calls).transact()
+        tx = multicall_contract.aggregate(calls).transact()
     except Exception as e:
-        logger.info(
-            'Failed to claim exited assets for leverage positions: vault=%s, user=%s %s...',
+        logger.error(
+            'Failed to claim exited assets for leverage position: vault=%s, user=%s %s...',
             vault,
             user,
             e,
@@ -83,8 +83,8 @@ def claim_exited_assets(
         tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
     )
     if not tx_receipt['status']:
-        logger.info(
-            'Failed to claim exited assets for leverage positions: vault=%s, user=%s...',
+        logger.error(
+            'Failed to confirm exited assets claim for leverage position: vault=%s, user=%s...',
             vault,
             user,
         )
@@ -125,7 +125,11 @@ def force_enter_exit_queue(
         tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
     )
     if not tx_receipt['status']:
-        logger.error('Force enter exit queue transaction failed')
+        logger.error(
+            'Failed to confirm force enter exit queue: vault=%s, user=%s...',
+            vault,
+            user,
+        )
         return None
 
     return tx_hash
