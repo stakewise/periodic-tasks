@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 execution_client = get_execution_client(EXECUTION_ENDPOINT, account=hot_wallet_account)
 
-
 graph_client = GraphClient(
     endpoint=GRAPH_API_URL,
     request_timeout=GRAPH_API_TIMEOUT,
