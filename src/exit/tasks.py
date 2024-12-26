@@ -48,24 +48,28 @@ async def handle_leverage_positions(block_number: BlockNumber) -> None:
     borrow_ltv = strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
     vault_ltv = strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
     all_leverage_positions = await graph_get_leverage_positions(block_number=block_number)
-    # Get positions by borrow ltv
-    borrow_ltv_positions = [pos for pos in all_leverage_positions if pos.borrow_ltv > borrow_ltv]
-    # Get vault position by vault ltv
+    # Get aave positions by borrow ltv
+    aave_positions = [pos for pos in all_leverage_positions if pos.borrow_ltv > borrow_ltv]
+    # Get vault positions by vault ltv
     proxy_to_position = {position.proxy: position for position in all_leverage_positions}
     allocators = await graph_get_allocators(
         ltv=vault_ltv, addresses=list(proxy_to_position.keys()), block_number=block_number
     )
-    leverage_positions_by_ltv = []
+    vault_positions = []
     for allocator in allocators:
-        leverage_positions_by_ltv.append(proxy_to_position[allocator])
+        vault_positions.append(proxy_to_position[allocator])
 
     # join positions
     leverage_positions = []
-    leverage_positions.extend(borrow_ltv_positions)
-    borrow_ltv_positions_ids = [pos.id for pos in borrow_ltv_positions]
-    for position in leverage_positions_by_ltv:
+    leverage_positions.extend(aave_positions)
+    borrow_ltv_positions_ids = set(pos.id for pos in aave_positions)
+    for position in vault_positions:
         if position.id not in borrow_ltv_positions_ids:
             leverage_positions.append(position)
+
+    if not leverage_positions:
+        logger.info('No risky leverage positions found...')
+        return
 
     logger.info('Checking %d leverage positions...', len(leverage_positions))
 
@@ -87,8 +91,7 @@ async def handle_leverage_positions(block_number: BlockNumber) -> None:
 async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
     """Process osTokenExitRequests from graph and claim exited assets."""
     # force claim for exit positions
-    max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent()
-    max_ltv_percent = max_ltv_percent // WAD
+    max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent() / WAD
     exit_requests = await graph_ostoken_exit_requests(max_ltv_percent, block_number=block_number)
     exit_requests = [
         exit_request for exit_request in exit_requests if exit_request.exit_request.can_be_claimed
@@ -128,8 +131,8 @@ def handle_leverage_position(
     position: LeveragePosition, harvest_params: HarvestParams | None, block_number: BlockNumber
 ) -> None:
     """
-    Submit force exit for leverage postion.
-    Also check for position active exit request and claim assets is possible.
+    Submit force exit for leverage position.
+    Also check for position active exit request and claim assets if possible.
     """
     if not can_force_enter_exit_queue(
         vault=position.vault,
@@ -138,7 +141,7 @@ def handle_leverage_position(
         block_number=block_number,
     ):
         logger.info(
-            'Skip leverage positions because it can\'t be forcefully closed: vault=%s, user=%s...',
+            'Skip leverage positions because it cannot be forcefully closed: vault=%s, user=%s...',
             position.vault,
             position.user,
         )
@@ -180,7 +183,7 @@ def handle_leverage_position(
         block_number=block_number,
     ):
         logger.info(
-            'Skip leverage positions because it can\'t be forcefully closed: vault=%s, user=%s...',
+            'Skip leverage positions because it cannot be forcefully closed: vault=%s, user=%s...',
             position.vault,
             position.user,
         )
