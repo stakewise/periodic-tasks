@@ -10,6 +10,6 @@ def setup_sentry() -> None:
     sentry_sdk.init(
         SENTRY_DSN,
         traces_sample_rate=0.1,
-        environment=NETWORK.value,
+        environment=NETWORK,
     )
     sentry_sdk.set_tag('network', NETWORK)
