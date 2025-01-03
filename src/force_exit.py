@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 
 from src.common.logs import setup_gql_log_level
 from src.common.sentry import setup_sentry
@@ -13,10 +12,6 @@ async def main() -> None:
     await force_exits()
 
 
-try:
-    setup_sentry()
-    setup_gql_log_level()
-    asyncio.run(main())
-except Exception as e:
-    logger.exception(e)
-    sys.exit(1)
+setup_sentry()
+setup_gql_log_level()
+asyncio.run(main())
