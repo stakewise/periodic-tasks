@@ -79,7 +79,9 @@ NETWORKS: dict[str, NetworkConfig] = {
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x48cD14FDB8e72A03C8D952af081DBB127D6281fc'
         ),
-        STRATEGY_REGISTRY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0x90b82E4b3aa385B4A02B7EBc1892a4BeD6B5c465'
+        ),
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x09e84205DF7c68907e619D07aFD90143c5763605'
         ),
