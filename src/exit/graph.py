@@ -175,7 +175,7 @@ async def graph_get_leverage_position_owner(proxy: ChecksumAddress) -> ChecksumA
     )
     params = {'proxy': proxy.lower()}
     response = await graph_client.run_query(query, params)
-    return Web3.to_checksum_address(response[0]['user'])
+    return Web3.to_checksum_address(response['leverageStrategyPositions'][0]['user'])
 
 
 async def graph_get_exit_requests(ids: list[str], block_number: BlockNumber) -> list[ExitRequest]:
