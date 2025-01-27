@@ -19,6 +19,7 @@ from .execution import (
 )
 from .graph import (
     graph_get_allocators,
+    graph_get_leverage_position_owner,
     graph_get_leverage_positions,
     graph_ostoken_exit_requests,
 )
@@ -101,6 +102,7 @@ async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
     vault_to_harvest_params: dict[ChecksumAddress, HarvestParams | None] = {}
 
     for os_token_exit_request in exit_requests:
+        position_owner = await graph_get_leverage_position_owner(os_token_exit_request.owner)
         vault = os_token_exit_request.vault
         harvest_params = vault_to_harvest_params.get(vault)
         if not harvest_params:
@@ -110,11 +112,11 @@ async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
         logger.info(
             'Claiming exited assets: vault=%s, user=%s...',
             vault,
-            os_token_exit_request.owner,
+            position_owner,
         )
         tx_hash = claim_exited_assets(
             vault=vault,
-            user=os_token_exit_request.owner,
+            user=position_owner,
             exit_request=os_token_exit_request.exit_request,
             harvest_params=harvest_params,
             block_number=block_number,
