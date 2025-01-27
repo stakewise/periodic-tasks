@@ -163,6 +163,21 @@ async def graph_ostoken_exit_requests(
     return result
 
 
+async def graph_get_leverage_position_owner(proxy: ChecksumAddress) -> ChecksumAddress:
+    query = gql(
+        """
+        query PositionsQuery($proxy: Bytes) {
+          leverageStrategyPositions(where: { proxy: $proxy }) {
+            user
+          }
+        }
+        """
+    )
+    params = {'proxy': proxy.lower()}
+    response = await graph_client.fetch_pages(query, params=params)
+    return Web3.to_checksum_address(response[0]['user'])
+
+
 async def graph_get_exit_requests(ids: list[str], block_number: BlockNumber) -> list[ExitRequest]:
     query = gql(
         """
