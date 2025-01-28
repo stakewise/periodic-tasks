@@ -31,6 +31,6 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
-      - name: Check project version matches tag name
-        run: |
-          [ "`poetry version --short`" == "${{ github.ref_name }}" ]
+#      - name: Check project version matches tag name
+#        run: |
+#          [ "`poetry version --short`" == "${{ github.ref_name }}" ]

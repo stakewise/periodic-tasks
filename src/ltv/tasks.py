@@ -1,8 +1,6 @@
 import logging
 from decimal import Decimal
 
-from eth_typing import ChecksumAddress
-
 from .clients import execution_client
 from .contracts import vault_user_ltv_tracker_contract
 from .graph import (
@@ -10,6 +8,7 @@ from .graph import (
     graph_get_ostoken_vaults,
     graph_get_vault_max_ltv_allocator,
 )
+from .typings import VaultMaxLtvUser
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,36 +26,48 @@ async def update_vault_max_ltv_user() -> None:
 
     block = execution_client.eth.get_block('finalized')
     logger.debug('Current block: %d', block['number'])
-    ostoken_vaults = await graph_get_ostoken_vaults()
-    for vault in ostoken_vaults:
-        await handle_vault(vault)
-
+    max_ltv_users = await get_max_ltv_users()
+    for user in max_ltv_users:
+        await handle_max_ltv_user(user)
     logger.info('Completed')
 
 
-async def handle_vault(vault: ChecksumAddress) -> None:
-    max_ltv_user = await graph_get_vault_max_ltv_allocator(vault)
-    if max_ltv_user is None:
-        logger.warning('No allocators in vault %s', vault)
-        return
-    logger.info('max LTV user for vault %s is %s', vault, max_ltv_user)
+async def get_max_ltv_users() -> list[VaultMaxLtvUser]:
+    ostoken_vaults = await graph_get_ostoken_vaults()
+    max_ltv_users = []
+    for vault in ostoken_vaults:
+        max_ltv_user_address = await graph_get_vault_max_ltv_allocator(vault)
+        if max_ltv_user_address is None:
+            logger.warning('No allocators in vault %s', vault)
+            continue
+        logger.info('max LTV user for vault %s is %s', vault, max_ltv_user_address)
 
-    harvest_params = await graph_get_harvest_params(vault)
-    logger.debug('Harvest params for vault %s: %s', vault, harvest_params)
+        harvest_params = await graph_get_harvest_params(vault)
+        logger.debug('Harvest params for vault %s: %s', vault, harvest_params)
 
-    # Get current LTV
-    ltv = vault_user_ltv_tracker_contract.get_vault_max_ltv(vault, harvest_params)
-    logger.info('Current LTV for vault %s: %s', vault, Decimal(ltv) / WAD)
+        # Get current LTV
+        ltv = vault_user_ltv_tracker_contract.get_vault_max_ltv(vault, harvest_params)
+        logger.info('Current LTV for vault %s: %s', vault, Decimal(ltv) / WAD)
 
-    # Get prev max LTV user
-    prev_max_ltv_user = vault_user_ltv_tracker_contract.get_max_ltv_user(vault)
-    if max_ltv_user == prev_max_ltv_user:
-        logger.info('Max LTV user did not change since last update. Skip updating user.')
-        return
+        # Get prev max LTV user
+        prev_max_ltv_user = vault_user_ltv_tracker_contract.get_max_ltv_user(vault)
+        if max_ltv_user_address == prev_max_ltv_user:
+            logger.info('Max LTV user did not change since last update. Skip updating user.')
+            continue
+        max_ltv_users.append(
+            VaultMaxLtvUser(
+                address=max_ltv_user_address, vault=vault, harvest_params=harvest_params
+            )
+        )
 
+    return max_ltv_users
+
+
+async def handle_max_ltv_user(max_ltv_user: VaultMaxLtvUser) -> None:
+    vault = max_ltv_user.vault
     # Update LTV
     tx = vault_user_ltv_tracker_contract.update_vault_max_ltv_user(
-        vault, max_ltv_user, harvest_params
+        vault, max_ltv_user.address, max_ltv_user.harvest_params
     )
     logger.info('Update transaction sent, tx hash: %s', tx.hex())
 
@@ -70,5 +81,5 @@ async def handle_vault(vault: ChecksumAddress) -> None:
     logger.info('Tx confirmed')
 
     # Get LTV after update
-    ltv = vault_user_ltv_tracker_contract.get_vault_max_ltv(vault, harvest_params)
+    ltv = vault_user_ltv_tracker_contract.get_vault_max_ltv(vault, max_ltv_user.harvest_params)
     logger.info('LTV for vault %s after update: %s', vault, Decimal(ltv) / WAD)
