@@ -1,9 +1,9 @@
 import asyncio
 import logging
 
-from src.common.logs import setup_gql_log_level
-from src.common.sentry import setup_sentry
-from src.ltv.tasks import update_vault_max_ltv_user
+from periodic_tasks.common.logs import setup_gql_log_level
+from periodic_tasks.common.sentry import setup_sentry
+from periodic_tasks.ltv.tasks import update_vault_max_ltv_user
 
 logger = logging.getLogger(__name__)
 

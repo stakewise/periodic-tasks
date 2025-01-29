@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from web3.types import ChecksumAddress
 
-from src.common.typings import HarvestParams
+from periodic_tasks.common.typings import HarvestParams
 
 
 @dataclass

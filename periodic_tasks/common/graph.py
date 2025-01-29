@@ -7,7 +7,7 @@ from sw_utils.graph.client import GraphClient
 from web3 import Web3
 from web3.types import Wei
 
-from src.common.typings import HarvestParams
+from periodic_tasks.common.typings import HarvestParams
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

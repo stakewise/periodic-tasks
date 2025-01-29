@@ -4,14 +4,14 @@ from eth_typing import ChecksumAddress
 from web3 import Web3
 from web3.types import BlockNumber, HexStr
 
-from src.common.contracts import ContractWrapper
-from src.common.settings import network_config
+from periodic_tasks.common.contracts import ContractWrapper
+from periodic_tasks.common.settings import network_config
 
 from .clients import execution_client
 
 logger = logging.getLogger(__name__)
 
-ABI_DIR = 'src/exit/abi'
+ABI_DIR = 'periodic_tasks/exit/abi'
 
 
 class LeverageStrategyContract(ContractWrapper):

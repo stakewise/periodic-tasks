@@ -1,4 +1,4 @@
-from src.common.settings import NETWORK, SENTRY_DSN
+from periodic_tasks.common.settings import NETWORK, SENTRY_DSN
 
 
 def setup_sentry() -> None:

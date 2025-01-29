@@ -4,8 +4,8 @@ from eth_typing import ChecksumAddress
 from gql import gql
 from web3 import Web3
 
-from src.common.graph import get_harvest_params
-from src.common.typings import HarvestParams
+from periodic_tasks.common.graph import get_harvest_params
+from periodic_tasks.common.typings import HarvestParams
 
 from .clients import graph_client
 

@@ -1,8 +1,11 @@
-from src.common.contracts import ContractWrapper
-from src.price.clients import sender_execution_client, target_execution_client
-from src.price.settings import price_network_config
+from periodic_tasks.common.contracts import ContractWrapper
+from periodic_tasks.price.clients import (
+    sender_execution_client,
+    target_execution_client,
+)
+from periodic_tasks.price.settings import price_network_config
 
-ABI_DIR = 'src/price/abi'
+ABI_DIR = 'periodic_tasks/price/abi'
 
 
 class PriceFeedContract(ContractWrapper):

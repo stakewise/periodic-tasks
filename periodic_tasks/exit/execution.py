@@ -4,8 +4,8 @@ from eth_typing import ChecksumAddress, HexStr
 from web3 import Web3
 from web3.types import BlockNumber
 
-from src.common.settings import EXECUTION_TRANSACTION_TIMEOUT
-from src.common.typings import HarvestParams
+from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
+from periodic_tasks.common.typings import HarvestParams
 
 from .clients import execution_client
 from .contracts import keeper_contract, leverage_strategy_contract, multicall_contract

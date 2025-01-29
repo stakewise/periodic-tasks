@@ -2,9 +2,12 @@ import logging
 import time
 from datetime import timedelta
 
-from src.price.clients import hot_wallet_account, sender_execution_client
-from src.price.contracts import price_feed_sender_contract, target_price_feed_contract
-from src.price.settings import price_network_config
+from periodic_tasks.price.clients import hot_wallet_account, sender_execution_client
+from periodic_tasks.price.contracts import (
+    price_feed_sender_contract,
+    target_price_feed_contract,
+)
+from periodic_tasks.price.settings import price_network_config
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

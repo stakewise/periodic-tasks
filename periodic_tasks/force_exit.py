@@ -1,9 +1,9 @@
 import asyncio
 import logging
 
-from src.common.logs import setup_gql_log_level
-from src.common.sentry import setup_sentry
-from src.exit.tasks import force_exits
+from periodic_tasks.common.logs import setup_gql_log_level
+from periodic_tasks.common.sentry import setup_sentry
+from periodic_tasks.exit.tasks import force_exits
 
 logger = logging.getLogger(__name__)
 

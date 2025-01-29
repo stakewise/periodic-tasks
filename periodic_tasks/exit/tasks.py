@@ -3,8 +3,8 @@ import logging
 from eth_typing import ChecksumAddress
 from web3.types import BlockNumber
 
-from src.common.typings import HarvestParams
-from src.ltv.graph import graph_get_harvest_params
+from periodic_tasks.common.typings import HarvestParams
+from periodic_tasks.ltv.graph import graph_get_harvest_params
 
 from .clients import execution_client
 from .contracts import (
