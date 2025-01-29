@@ -19,9 +19,9 @@ def get_execution_client(endpoint: str, account: LocalAccount | None = None) -> 
     return client
 
 
-def get_hot_wallet_account(key: str | None) -> LocalAccount | None:
-    if key:
-        return Account().from_key(key)
+def get_hot_wallet_account(private_key: str | None) -> LocalAccount | None:
+    if private_key:
+        return Account().from_key(private_key)
     return None
 
 

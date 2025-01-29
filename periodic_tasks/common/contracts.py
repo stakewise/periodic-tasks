@@ -23,10 +23,6 @@ class ContractWrapper:
         with open(os.path.join(current_dir, abi_path), encoding='utf-8') as f:
             return json.load(f)
 
-    # def _load_abi(self, abi_path: str) -> dict:
-    #     with open(abi_path, encoding='utf-8') as f:
-    #         return json.load(f)
-
     @property
     def functions(self) -> ContractFunctions:
         return self.contract.functions
