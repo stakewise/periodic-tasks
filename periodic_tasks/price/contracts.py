@@ -5,7 +5,7 @@ from periodic_tasks.price.clients import (
 )
 from periodic_tasks.price.settings import price_network_config
 
-ABI_DIR = 'periodic_tasks/price/abi'
+ABI_DIR = '../price/abi'
 
 
 class PriceFeedContract(ContractWrapper):

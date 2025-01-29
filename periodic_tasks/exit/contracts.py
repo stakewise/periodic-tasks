@@ -11,7 +11,7 @@ from .clients import execution_client
 
 logger = logging.getLogger(__name__)
 
-ABI_DIR = 'periodic_tasks/exit/abi'
+ABI_DIR = '../exit/abi'
 
 
 class LeverageStrategyContract(ContractWrapper):

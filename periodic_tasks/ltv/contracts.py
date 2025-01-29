@@ -12,7 +12,7 @@ from .clients import execution_client
 
 logger = logging.getLogger(__name__)
 
-ABI_DIR = 'periodic_tasks/ltv/abi'
+ABI_DIR = '../ltv/abi'
 
 
 class VaultUserLTVTrackerContract(ContractWrapper):

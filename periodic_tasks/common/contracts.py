@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 from eth_typing import ChecksumAddress, HexStr
 from hexbytes import HexBytes
@@ -18,8 +19,13 @@ class ContractWrapper:
         self.contract = client.eth.contract(address=address, abi=self._load_abi(abi_path))
 
     def _load_abi(self, abi_path: str) -> dict:
-        with open(abi_path, encoding='utf-8') as f:
+        current_dir = os.path.dirname(__file__)
+        with open(os.path.join(current_dir, abi_path), encoding='utf-8') as f:
             return json.load(f)
+
+    # def _load_abi(self, abi_path: str) -> dict:
+    #     with open(abi_path, encoding='utf-8') as f:
+    #         return json.load(f)
 
     @property
     def functions(self) -> ContractFunctions:
