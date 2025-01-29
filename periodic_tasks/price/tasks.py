@@ -23,6 +23,8 @@ CHECK_INTERVAL = timedelta(minutes=1)
 
 
 def check_and_sync() -> None:
+    if not hot_wallet_account:
+        raise ValueError('Set HOT_WALLET_PRIVATE_KEY environment variable')
     # Step 1: Check latest timestamp
     latest_timestamp = target_price_feed_contract.functions.latestTimestamp().call()
     current_time = int(time.time())
