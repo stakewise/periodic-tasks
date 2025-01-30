@@ -7,6 +7,7 @@ from periodic_tasks.common.typings import HarvestParams
 
 @dataclass
 class VaultMaxLtvUser:
+    ltv: int
     address: ChecksumAddress
     vault: ChecksumAddress
     harvest_params: HarvestParams | None

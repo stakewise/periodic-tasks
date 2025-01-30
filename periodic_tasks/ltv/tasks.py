@@ -56,7 +56,7 @@ async def get_max_ltv_users() -> list[VaultMaxLtvUser]:
             continue
         max_ltv_users.append(
             VaultMaxLtvUser(
-                address=max_ltv_user_address, vault=vault, harvest_params=harvest_params
+                address=max_ltv_user_address, vault=vault, ltv=ltv, harvest_params=harvest_params
             )
         )
 
