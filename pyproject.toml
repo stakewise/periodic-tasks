@@ -1,14 +1,13 @@
 [tool.poetry]
 name = "periodic-tasks"
-version = "v0.2.5"
+version = "v0.2.6"
 description = ""
 authors = ["StakeWise Labs <info@stakewise.io>"]
 readme = "README.md"
-package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
-sw-utils = {git = "https://github.com/stakewise/sw-utils.git", rev = "v0.7.3"}
+sw-utils = {git = "https://github.com/stakewise/sw-utils.git", rev = "v0.7.6"}
 python-decouple = "==3.8"
 aiohttp = "==3.10.11"
 sentry-sdk = "==2.19.2"
@@ -30,12 +29,12 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.bandit]
-exclude_dirs = ["src/config/networks.py"]
+exclude_dirs = ["periodic_tasks/config/networks.py"]
 skips = ["B608"]
 
 [tool.pylint."pre-commit-hook"]
 disable = ["C0103", "C0114", "C0115", "C0116", "R0801", "R0902", "R0903", "R0914", "W0511", "W0703"]
-ignore-paths=["src/.*/tests/.*", "src/conftest.py"]
+ignore-paths=["periodic_tasks/.*/tests/.*", "periodic_tasks/conftest.py"]
 
 [tool.pylint."BASIC"]
 good-names = ["db", "i", "w3"]

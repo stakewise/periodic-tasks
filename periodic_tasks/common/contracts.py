@@ -1,5 +1,7 @@
 import json
 import logging
+import sys
+from pathlib import Path
 
 from eth_typing import ChecksumAddress, HexStr
 from hexbytes import HexBytes
@@ -18,7 +20,12 @@ class ContractWrapper:
         self.contract = client.eth.contract(address=address, abi=self._load_abi(abi_path))
 
     def _load_abi(self, abi_path: str) -> dict:
-        with open(abi_path, encoding='utf-8') as f:
+        # get subclass file path
+        file = sys.modules[self.__class__.__module__].__file__
+        if not file:
+            raise IndexError("Can't get abi file path")
+        current_dir = Path(file).parent
+        with (current_dir / abi_path).open(encoding='utf-8') as f:
             return json.load(f)
 
     @property

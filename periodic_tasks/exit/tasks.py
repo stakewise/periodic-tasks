@@ -3,8 +3,8 @@ import logging
 from eth_typing import ChecksumAddress
 from web3.types import BlockNumber
 
-from src.common.typings import HarvestParams
-from src.ltv.graph import graph_get_harvest_params
+from periodic_tasks.common.typings import HarvestParams
+from periodic_tasks.ltv.graph import graph_get_harvest_params
 
 from .clients import execution_client
 from .contracts import (
@@ -23,7 +23,7 @@ from .graph import (
     graph_get_leverage_positions,
     graph_ostoken_exit_requests,
 )
-from .typings import LeveragePosition
+from .typings import LeveragePosition, OsTokenExitRequest
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -45,29 +45,7 @@ async def force_exits() -> None:
 
 async def handle_leverage_positions(block_number: BlockNumber) -> None:
     """Process graph leverage positions."""
-    strategy_id = leverage_strategy_contract.strategy_id()
-    borrow_ltv = strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
-    vault_ltv = strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
-    all_leverage_positions = await graph_get_leverage_positions(block_number=block_number)
-    # Get aave positions by borrow ltv
-    aave_positions = [pos for pos in all_leverage_positions if pos.borrow_ltv > borrow_ltv]
-    # Get vault positions by vault ltv
-    proxy_to_position = {position.proxy: position for position in all_leverage_positions}
-    allocators = await graph_get_allocators(
-        ltv=vault_ltv, addresses=list(proxy_to_position.keys()), block_number=block_number
-    )
-    vault_positions = []
-    for allocator in allocators:
-        vault_positions.append(proxy_to_position[allocator])
-
-    # join positions
-    leverage_positions = []
-    leverage_positions.extend(aave_positions)
-    borrow_ltv_positions_ids = set(pos.id for pos in aave_positions)
-    for position in vault_positions:
-        if position.id not in borrow_ltv_positions_ids:
-            leverage_positions.append(position)
-
+    leverage_positions = await fetch_leverage_positions(block_number)
     if not leverage_positions:
         logger.info('No risky leverage positions found...')
         return
@@ -91,12 +69,7 @@ async def handle_leverage_positions(block_number: BlockNumber) -> None:
 
 async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
     """Process osTokenExitRequests from graph and claim exited assets."""
-    # force claim for exit positions
-    max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent() / WAD
-    exit_requests = await graph_ostoken_exit_requests(max_ltv_percent, block_number=block_number)
-    exit_requests = [
-        exit_request for exit_request in exit_requests if exit_request.exit_request.can_be_claimed
-    ]
+    exit_requests = await fetch_ostoken_exit_requests(block_number)
 
     logger.info('Force assets claim for %d exit requests...', len(exit_requests))
     vault_to_harvest_params: dict[ChecksumAddress, HarvestParams | None] = {}
@@ -127,6 +100,42 @@ async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
                 vault,
                 os_token_exit_request.owner,
             )
+
+
+async def fetch_leverage_positions(block_number: BlockNumber) -> list[LeveragePosition]:
+    strategy_id = leverage_strategy_contract.strategy_id()
+    borrow_ltv = strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
+    vault_ltv = strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
+    all_leverage_positions = await graph_get_leverage_positions(block_number=block_number)
+    # Get aave positions by borrow ltv
+    aave_positions = [pos for pos in all_leverage_positions if pos.borrow_ltv > borrow_ltv]
+    # Get vault positions by vault ltv
+    proxy_to_position = {position.proxy: position for position in all_leverage_positions}
+    allocators = await graph_get_allocators(
+        ltv=vault_ltv, addresses=list(proxy_to_position.keys()), block_number=block_number
+    )
+    vault_positions = []
+    for allocator in allocators:
+        vault_positions.append(proxy_to_position[allocator])
+
+    # join positions
+    leverage_positions = []
+    leverage_positions.extend(aave_positions)
+    borrow_ltv_positions_ids = set(pos.id for pos in aave_positions)
+    for position in vault_positions:
+        if position.id not in borrow_ltv_positions_ids:
+            leverage_positions.append(position)
+    return leverage_positions
+
+
+async def fetch_ostoken_exit_requests(block_number: BlockNumber) -> list[OsTokenExitRequest]:
+    max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent() / WAD
+    exit_requests = await graph_ostoken_exit_requests(max_ltv_percent, block_number=block_number)
+    exit_requests = [
+        exit_request for exit_request in exit_requests if exit_request.exit_request.can_be_claimed
+    ]
+
+    return exit_requests
 
 
 def handle_leverage_position(

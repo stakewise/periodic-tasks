@@ -1,9 +1,9 @@
 from decouple import config
 
-from src.common.networks import NETWORKS
+from periodic_tasks.common.networks import NETWORKS
 
 EXECUTION_ENDPOINT: str = config('EXECUTION_ENDPOINT', default='')
-HOT_WALLET_PRIVATE_KEY: str = config('HOT_WALLET_PRIVATE_KEY')
+HOT_WALLET_PRIVATE_KEY: str = config('HOT_WALLET_PRIVATE_KEY', default='')
 
 GRAPH_PAGE_SIZE: int = config('GRAPH_PAGE_SIZE', default=100, cast=int)
 

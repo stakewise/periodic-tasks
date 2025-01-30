@@ -4,15 +4,13 @@ from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
 from web3 import Web3
 
-from src.common.contracts import ContractWrapper
-from src.common.settings import network_config
-from src.common.typings import HarvestParams
+from periodic_tasks.common.contracts import ContractWrapper
+from periodic_tasks.common.settings import network_config
+from periodic_tasks.common.typings import HarvestParams
 
 from .clients import execution_client
 
 logger = logging.getLogger(__name__)
-
-ABI_DIR = 'src/ltv/abi'
 
 
 class VaultUserLTVTrackerContract(ContractWrapper):
@@ -57,7 +55,7 @@ class VaultUserLTVTrackerContract(ContractWrapper):
 
 
 vault_user_ltv_tracker_contract = VaultUserLTVTrackerContract(
-    abi_path=f'{ABI_DIR}/IVaultUserLtvTracker.json',
+    abi_path='abi/IVaultUserLtvTracker.json',
     address=network_config.VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS,
     client=execution_client,
 )

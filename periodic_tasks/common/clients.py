@@ -5,7 +5,7 @@ from eth_account.signers.local import LocalAccount
 from web3 import Web3
 from web3.middleware import construct_sign_and_send_raw_middleware
 
-from src.common.settings import HOT_WALLET_PRIVATE_KEY
+from periodic_tasks.common.settings import HOT_WALLET_PRIVATE_KEY
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,5 +19,12 @@ def get_execution_client(endpoint: str, account: LocalAccount | None = None) -> 
     return client
 
 
-hot_wallet_account = Account().from_key(HOT_WALLET_PRIVATE_KEY)
-logger.info('Wallet address: %s', hot_wallet_account.address)
+def get_hot_wallet_account(private_key: str | None) -> LocalAccount | None:
+    if private_key:
+        return Account().from_key(private_key)
+    return None
+
+
+hot_wallet_account = get_hot_wallet_account(HOT_WALLET_PRIVATE_KEY)
+if hot_wallet_account:
+    logger.info('Wallet address: %s', hot_wallet_account.address)

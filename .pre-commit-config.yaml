@@ -87,6 +87,6 @@ repos:
     rev: 'v2.13'
     hooks:
       - id: vulture
-        args: ["src/"]
+        args: ["periodic_tasks/"]
         files: no-files
         always_run: true
