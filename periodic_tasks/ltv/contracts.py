@@ -12,8 +12,6 @@ from .clients import execution_client
 
 logger = logging.getLogger(__name__)
 
-ABI_DIR = '../ltv/abi'
-
 
 class VaultUserLTVTrackerContract(ContractWrapper):
     def get_max_ltv_user(self, vault: ChecksumAddress) -> ChecksumAddress:
@@ -57,7 +55,7 @@ class VaultUserLTVTrackerContract(ContractWrapper):
 
 
 vault_user_ltv_tracker_contract = VaultUserLTVTrackerContract(
-    abi_path=f'{ABI_DIR}/IVaultUserLtvTracker.json',
+    abi_path='abi/IVaultUserLtvTracker.json',
     address=network_config.VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS,
     client=execution_client,
 )

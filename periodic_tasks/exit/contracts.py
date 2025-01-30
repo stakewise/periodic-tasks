@@ -11,8 +11,6 @@ from .clients import execution_client
 
 logger = logging.getLogger(__name__)
 
-ABI_DIR = '../exit/abi'
-
 
 class LeverageStrategyContract(ContractWrapper):
     def strategy_id(self) -> str:
@@ -53,31 +51,31 @@ class MulticallContract(ContractWrapper):
 
 
 leverage_strategy_contract = LeverageStrategyContract(
-    abi_path=f'{ABI_DIR}/ILeverageStrategy.json',
+    abi_path='abi/ILeverageStrategy.json',
     address=network_config.LEVERAGE_STRATEGY_CONTRACT_ADDRESS,
     client=execution_client,
 )
 
 strategy_registry_contract = StrategiesRegistryContract(
-    abi_path=f'{ABI_DIR}/IStrategyRegistry.json',
+    abi_path='abi/IStrategyRegistry.json',
     address=network_config.STRATEGY_REGISTRY_CONTRACT_ADDRESS,
     client=execution_client,
 )
 
 ostoken_vault_escrow_contract = OsTokenVaultEscrowContract(
-    abi_path=f'{ABI_DIR}/IOsTokenVaultEscrow.json',
+    abi_path='abi/IOsTokenVaultEscrow.json',
     address=network_config.OSTOKEN_ESCROW_CONTRACT_ADDRESS,
     client=execution_client,
 )
 
 keeper_contract = KeeperContract(
-    abi_path=f'{ABI_DIR}/IKeeper.json',
+    abi_path='abi/IKeeper.json',
     address=network_config.KEEPER_CONTRACT_ADDRESS,
     client=execution_client,
 )
 
 multicall_contract = MulticallContract(
-    abi_path=f'{ABI_DIR}/Multicall.json',
+    abi_path='abi/Multicall.json',
     address=network_config.MULTICALL_CONTRACT_ADDRESS,
     client=execution_client,
 )
