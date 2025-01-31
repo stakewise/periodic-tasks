@@ -12,5 +12,10 @@ EXECUTION_TRANSACTION_TIMEOUT: int = config('EXECUTION_TRANSACTION_TIMEOUT', def
 
 SENTRY_DSN: str = config('SENTRY_DSN', default='')
 
+# Prometheus
+METRICS_HOST: str = config('METRICS_HOST', default='127.0.0.1')
+METRICS_PORT: int = config('METRICS_PORT', default=9100, cast=int)
+METRICS_REFRESH_INTERNAL: int = config('METRICS_REFRESH_INTERNAL', default=60 * 5, cast=int)
+
 NETWORK = config('NETWORK')
 network_config = NETWORKS[NETWORK]
