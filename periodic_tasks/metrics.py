@@ -25,29 +25,29 @@ RECORDS_LIMIT = 100
 
 class Metrics:
     def __init__(self) -> None:
-        self.app_version = Info('app_version', 'V3 Keeper version')
-        self.execution_block = Gauge('execution_block', 'Chain finalized head: Execution Block')
+        self.app_version = Info('app_version', 'App version', labelnames=['network'])
+        self.execution_block = Gauge('execution_block', 'Chain finalized head: Execution Block', labelnames=['network'])
 
-        self.max_ltv_user = Gauge(
-            'max_ltv_user',
+        self.user_max_ltv = Gauge(
+            'user_max_ltv',
             'Vault max ltv user',
             labelnames=['network', 'user', 'vault'],
         )
 
-        self.ostoken_exit_request = Gauge(
-            'ostoken_exit_request',
+        self.ostoken_exit_request_ltv = Gauge(
+            'ostoken_exit_request_ltv',
             'OStoken exit requests',
             labelnames=['network', 'user', 'vault'],
         )
 
-        self.leverage_position = Gauge(
-            'leverage_position',
-            'Risky leverage positions',
+        self.leverage_position_ltv = Gauge(
+            'leverage_position_ltv',
+            'Risky leverage position LTVs',
             labelnames=['network', 'user', 'vault'],
         )
 
     def set_app_version(self) -> None:
-        self.app_version.info({'version': _get_project_meta()['version']})
+        self.app_version.labels(network=NETWORK).info({'version': _get_project_meta()['version']})
 
 
 metrics = Metrics()
@@ -57,29 +57,29 @@ metrics.set_app_version()
 async def liquidation_metrics() -> None:
     block = execution_client.eth.get_block('finalized')
     block_number = block['number']
-    metrics.execution_block.set(block_number)
+    metrics.execution_block.labels(network=NETWORK).set(block_number)
 
     exit_requests = await fetch_ostoken_exit_requests(block_number)
     for exit_request in exit_requests[:RECORDS_LIMIT]:
-        metrics.ostoken_exit_request.labels(
+        metrics.ostoken_exit_request_ltv.labels(
             network=NETWORK, user=exit_request.owner, vault=exit_request.vault
         ).set(exit_request.ltv)
 
     leverage_positions = await fetch_leverage_positions(block_number)
     for leverage_position in leverage_positions[:RECORDS_LIMIT]:
-        metrics.leverage_position.labels(
+        metrics.leverage_position_ltv.labels(
             network=NETWORK, user=leverage_position.user, vault=leverage_position.vault
         ).set(leverage_position.borrow_ltv)
 
     max_ltv_users = await get_max_ltv_users()
     for max_ltv_user in max_ltv_users[:RECORDS_LIMIT]:
-        metrics.max_ltv_user.labels(
+        metrics.user_max_ltv.labels(
             network=NETWORK, user=max_ltv_user.address, vault=max_ltv_user.vault
         ).set(max_ltv_user.ltv)
 
 
 async def main() -> None:
-    await metrics_server()
+    metrics_server()
 
     with InterruptHandler() as interrupt_handler:
         while not interrupt_handler.exit:
@@ -89,7 +89,7 @@ async def main() -> None:
             await interrupt_handler.sleep(sleep_time)
 
 
-async def metrics_server() -> None:
+def metrics_server() -> None:
     start_http_server(METRICS_PORT, METRICS_HOST)
 
 
