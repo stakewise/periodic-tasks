@@ -26,7 +26,9 @@ RECORDS_LIMIT = 100
 class Metrics:
     def __init__(self) -> None:
         self.app_version = Info('app_version', 'App version', labelnames=['network'])
-        self.execution_block = Gauge('execution_block', 'Chain finalized head: Execution Block', labelnames=['network'])
+        self.execution_block = Gauge(
+            'execution_block', 'Chain finalized head: Execution Block', labelnames=['network']
+        )
 
         self.user_max_ltv = Gauge(
             'user_max_ltv',
