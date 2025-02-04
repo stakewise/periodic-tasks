@@ -6,12 +6,14 @@ from sw_utils import InterruptHandler
 
 from periodic_tasks import _get_project_meta
 from periodic_tasks.common.logs import setup_gql_log_level
+from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.sentry import setup_sentry
 from periodic_tasks.common.settings import (
     METRICS_HOST,
     METRICS_PORT,
     METRICS_REFRESH_INTERNAL,
     NETWORK,
+    network_config,
 )
 from periodic_tasks.exit.clients import execution_client
 from periodic_tasks.exit.tasks import (
@@ -61,23 +63,29 @@ async def liquidation_metrics() -> None:
     block_number = block['number']
     metrics.execution_block.labels(network=NETWORK).set(block_number)
 
-    exit_requests = await fetch_ostoken_exit_requests(block_number)
-    for exit_request in exit_requests[:RECORDS_LIMIT]:
-        metrics.ostoken_exit_request_ltv.labels(
-            network=NETWORK, user=exit_request.owner, vault=exit_request.vault
-        ).set(exit_request.ltv)
+    if network_config.OSTOKEN_ESCROW_CONTRACT_ADDRESS != ZERO_CHECKSUM_ADDRESS:
+        exit_requests = await fetch_ostoken_exit_requests(block_number)
+        for exit_request in exit_requests[:RECORDS_LIMIT]:
+            metrics.ostoken_exit_request_ltv.labels(
+                network=NETWORK, user=exit_request.owner, vault=exit_request.vault
+            ).set(exit_request.ltv)
 
-    leverage_positions = await fetch_leverage_positions(block_number)
-    for leverage_position in leverage_positions[:RECORDS_LIMIT]:
-        metrics.leverage_position_ltv.labels(
-            network=NETWORK, user=leverage_position.user, vault=leverage_position.vault
-        ).set(leverage_position.borrow_ltv)
+    if ZERO_CHECKSUM_ADDRESS not in (
+        network_config.LEVERAGE_STRATEGY_CONTRACT_ADDRESS,
+        network_config.STRATEGY_REGISTRY_CONTRACT_ADDRESS,
+    ):
+        leverage_positions = await fetch_leverage_positions(block_number)
+        for leverage_position in leverage_positions[:RECORDS_LIMIT]:
+            metrics.leverage_position_ltv.labels(
+                network=NETWORK, user=leverage_position.user, vault=leverage_position.vault
+            ).set(leverage_position.borrow_ltv)
 
-    max_ltv_users = await get_max_ltv_users()
-    for max_ltv_user in max_ltv_users[:RECORDS_LIMIT]:
-        metrics.user_max_ltv.labels(
-            network=NETWORK, user=max_ltv_user.address, vault=max_ltv_user.vault
-        ).set(max_ltv_user.ltv)
+    if network_config.VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS != ZERO_CHECKSUM_ADDRESS:
+        max_ltv_users = await get_max_ltv_users()
+        for max_ltv_user in max_ltv_users[:RECORDS_LIMIT]:
+            metrics.user_max_ltv.labels(
+                network=NETWORK, user=max_ltv_user.address, vault=max_ltv_user.vault
+            ).set(max_ltv_user.ltv)
 
 
 async def main() -> None:
