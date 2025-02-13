@@ -19,12 +19,5 @@ def get_execution_client(endpoint: str, account: LocalAccount | None = None) -> 
     return client
 
 
-def get_hot_wallet_account(private_key: str | None) -> LocalAccount | None:
-    if private_key:
-        return Account().from_key(private_key)
-    return None
-
-
-hot_wallet_account = get_hot_wallet_account(HOT_WALLET_PRIVATE_KEY)
-if hot_wallet_account:
-    logger.info('Wallet address: %s', hot_wallet_account.address)
+hot_wallet_account = Account().from_key(HOT_WALLET_PRIVATE_KEY)
+logger.info('Wallet address: %s', hot_wallet_account.address)
