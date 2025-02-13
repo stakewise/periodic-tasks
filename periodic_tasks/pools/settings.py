@@ -1,11 +1,9 @@
-from dataclasses import dataclass
-
 from decouple import config
+from eth_account.signers.local import LocalAccount
 from sw_utils.networks import GNOSIS, MAINNET
 from web3 import Web3
-from web3.types import ChecksumAddress
 
-from periodic_tasks.common.settings import NETWORK
+from periodic_tasks.common.clients import get_hot_wallet_account
 
 ETH_TICKER = 'ETH'
 GNO_TICKER = 'GNO'
@@ -21,14 +19,21 @@ NETWORK_TICKERS: dict[str, list[str]] = {
     GNOSIS: [ETH_TICKER, BTC_TICKER, SDAI_TICKER, BCSPX_TICKER],
 }
 
+BTC_WALLET_PRIVATE_KEY: str = config('BTC_WALLET_PRIVATE_KEY', default='')
+SOL_WALLET_PRIVATE_KEY: str = config('SOL_WALLET_PRIVATE_KEY', default='')  # eth
+SUSDS_WALLET_PRIVATE_KEY: str = config('SUSDS_WALLET_PRIVATE_KEY', default='')  # eth
+SWISE_WALLET_PRIVATE_KEY: str = config('SWISE_WALLET_PRIVATE_KEY', default='')  # eth
+ETH_WALLET_PRIVATE_KEY: str = config('ETH_WALLET_PRIVATE_KEY', default='')  # gno
+SDAI_WALLET_PRIVATE_KEY: str = config('SDAI_WALLET_PRIVATE_KEY', default='')  # gno
+BCSPX_WALLET_PRIVATE_KEY: str = config('BCSPX_WALLET_PRIVATE_KEY', default='')  # gno
 
-TO_BTC_WALLET: str = config('BTC_WALLET', default='')
-TO_SOL_WALLET: str = config('SOL_WALLET', default='')  # eth
-TO_SUSDS_WALLET: str = config('SUSDS_WALLET', default='')  # eth
-TO_SWISE_WALLET: str = config('SWISE_WALLET', default='')  # eth
-TO_ETH_WALLET: str = config('ETH_WALLET', default='')  # gno
-TO_SDAI_WALLET: str = config('SDAI_WALLET', default='')  # gno
-TO_BCSPX_WALLET: str = config('BCSPX_WALLET', default='')  # gno
+BTC_WALLET = get_hot_wallet_account(BTC_WALLET_PRIVATE_KEY)
+SOL_WALLET = get_hot_wallet_account(SOL_WALLET_PRIVATE_KEY)
+SUSDS_WALLET = get_hot_wallet_account(SUSDS_WALLET_PRIVATE_KEY)
+SWISE_WALLET = get_hot_wallet_account(SWISE_WALLET_PRIVATE_KEY)
+ETH_WALLET = get_hot_wallet_account(ETH_WALLET_PRIVATE_KEY)
+SDAI_WALLET = get_hot_wallet_account(SDAI_WALLET_PRIVATE_KEY)
+BCSPX_WALLET = get_hot_wallet_account(BCSPX_WALLET_PRIVATE_KEY)
 
 BTC_VAULT: str = config('BTC_VAULT', default='')
 SOL_VAULT: str = config('SOL_VAULT', default='')
@@ -39,34 +44,15 @@ SDAI_VAULT: str = config('SDAI_VAULT', default='')
 BCSPX_VAULT: str = config('BCSPX_VAULT', default='')
 
 
-TICKER_TO_SETTINGS: dict[str, tuple[str, str]] = {
-    BTC_TICKER: (TO_BTC_WALLET, BTC_VAULT),
-    SOL_TICKER: (TO_SOL_WALLET, SOL_VAULT),
-    SUSDS_TICKER: (TO_SUSDS_WALLET, SUSDS_VAULT),
-    SWISE_TICKER: (TO_SWISE_WALLET, SWISE_VAULT),
-    ETH_TICKER: (TO_ETH_WALLET, ETH_VAULT),
-    SDAI_VAULT: (TO_SDAI_WALLET, SDAI_VAULT),
-    BCSPX_TICKER: (TO_BCSPX_WALLET, BCSPX_VAULT),
+TICKER_TO_SETTINGS: dict[str, tuple[LocalAccount | None, str]] = {
+    BTC_TICKER: (BTC_WALLET, BTC_VAULT),
+    SOL_TICKER: (SOL_WALLET, SOL_VAULT),
+    SUSDS_TICKER: (SUSDS_WALLET, SUSDS_VAULT),
+    SWISE_TICKER: (SWISE_WALLET, SWISE_VAULT),
+    ETH_TICKER: (ETH_WALLET, ETH_VAULT),
+    SDAI_VAULT: (SDAI_WALLET, SDAI_VAULT),
+    BCSPX_TICKER: (BCSPX_WALLET, BCSPX_VAULT),
 }
-
-
-@dataclass
-class Data:
-    ticker: str
-    wallet_address: ChecksumAddress
-    vault_address: ChecksumAddress
-
-
-DDDATA: list[Data] = []
-for ticker in NETWORK_TICKERS[NETWORK]:
-    if all(TICKER_TO_SETTINGS.get(ticker, [])):
-        DDDATA.append(
-            Data(
-                ticker=ticker,
-                wallet_address=Web3.to_checksum_address(TICKER_TO_SETTINGS[ticker][0]),
-                vault_address=Web3.to_checksum_address(TICKER_TO_SETTINGS[ticker][1]),
-            )
-        )
 
 
 TOKEN_ADDRESSES = {
@@ -91,6 +77,7 @@ NETWORK_BASE_TICKER_ADDRESSES = {
     MAINNET: TOKEN_ADDRESSES[MAINNET][ETH_TICKER],
     GNOSIS: TOKEN_ADDRESSES[GNOSIS][GNO_TICKER],
 }
+
 COWSWAP_REQUEST_TIMEOUT: int = config('COWSWAP_REQUEST_TIMEOUT', default='60', cast=int)
 COWSWAP_ORDER_PROCESSING_TIMEOUT: int = config(
     'COWSWAP_ORDER_PROCESSING_TIMEOUT', default='60', cast=int
