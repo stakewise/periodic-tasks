@@ -4,8 +4,9 @@ from web3 import Web3
 
 from periodic_tasks.common.settings import NETWORK
 
+from .contracts import get_erc20_contract
 from .cow_protocol import CowProtocolWrapper
-from .execution import distribute_tokens, get_eth_balance
+from .execution import distribute_tokens
 from .settings import (
     NETWORK_BASE_TICKER_ADDRESSES,
     NETWORK_TICKERS,
@@ -39,9 +40,12 @@ async def handle_pools() -> None:
             )
 
     for pool in pool_settings:
-        base_to_swap = get_eth_balance(pool.wallet_address)  # eth or gno amount
+        token_contract = get_erc20_contract(
+            address=NETWORK_BASE_TICKER_ADDRESSES[NETWORK],
+        )
+        base_to_swap = token_contract.get_balance(pool.wallet.address)  # eth or gno amount
         logger.info('')
-
+        # base_to_swap = int(base_to_swap / 20)  # todo
         x_token_amount = CowProtocolWrapper().swap(
             wallet=pool.wallet,
             sell_token=NETWORK_BASE_TICKER_ADDRESSES[NETWORK],
@@ -51,7 +55,6 @@ async def handle_pools() -> None:
         if not x_token_amount or x_token_amount < 1:
             logger.info('')
             continue
-
         logger.info('')
         await distribute_tokens(
             token=TOKEN_ADDRESSES[NETWORK][pool.ticker],

@@ -6,6 +6,7 @@ from web3 import Web3
 from periodic_tasks.common.clients import get_hot_wallet_account
 
 ETH_TICKER = 'ETH'
+DAI_TICKER = 'DAI'
 GNO_TICKER = 'GNO'
 BTC_TICKER = 'BTC'
 SOL_TICKER = 'SOL'
@@ -50,7 +51,7 @@ TICKER_TO_SETTINGS: dict[str, tuple[LocalAccount | None, str]] = {
     SUSDS_TICKER: (SUSDS_WALLET, SUSDS_VAULT),
     SWISE_TICKER: (SWISE_WALLET, SWISE_VAULT),
     ETH_TICKER: (ETH_WALLET, ETH_VAULT),
-    SDAI_VAULT: (SDAI_WALLET, SDAI_VAULT),
+    SDAI_TICKER: (SDAI_WALLET, SDAI_VAULT),
     BCSPX_TICKER: (BCSPX_WALLET, BCSPX_VAULT),
 }
 
@@ -64,7 +65,7 @@ TOKEN_ADDRESSES = {
         SWISE_TICKER: Web3.to_checksum_address('0x48c3399719b582dd63eb5aadf12a40b4c3f52fa2'),
     },
     GNOSIS: {
-        'DAI': Web3.to_checksum_address('0x00000000000000000'),  # todo
+        DAI_TICKER: Web3.to_checksum_address('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
         GNO_TICKER: Web3.to_checksum_address('0x9C58BAcC331c9aa871AFD802DB6379a98e80CEdb'),
         ETH_TICKER: Web3.to_checksum_address('0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1'),
         BTC_TICKER: Web3.to_checksum_address('0x8e5bbbb09ed1ebde8674cda39a0c169401db4252'),
