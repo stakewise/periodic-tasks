@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class TokenDistributorContract(ContractWrapper):
+    abi_path = 'abi/TokenDistributor.json'
+
     def distribute_one_time(
         self, vault: ChecksumAddress, token: ChecksumAddress, amount: Wei
     ) -> HexBytes:
@@ -59,6 +61,8 @@ class SUSDsContract(ContractWrapper):
 
 
 class WrappedEthContract(ContractWrapper):
+    abi_path = 'abi/WrappedEth.json'
+
     def deposit(self, value: Wei) -> HexBytes:
         return self.contract.functions.deposit().transact({'value': value})
 
@@ -67,7 +71,6 @@ def get_erc20_contract(address: ChecksumAddress, client: Web3 | None = None) -> 
     if not client:
         client = execution_client
     return Erc20Contract(
-        abi_path='abi/Erc20Token.json',
         address=address,
         client=client,
     )
@@ -79,7 +82,6 @@ def get_wrapped_eth_contract(
     if not client:
         client = execution_client
     return WrappedEthContract(
-        abi_path='abi/WrappedEth.json',
         address=address,
         client=client,
     )
@@ -89,14 +91,13 @@ def get_susds_contract(address: ChecksumAddress, client: Web3 | None = None) -> 
     if not client:
         client = execution_client
     return SUSDsContract(
-        abi_path='abi/Erc4626Token.json',
         address=address,
         client=client,
     )
 
 
 token_distributor_contract = TokenDistributorContract(
-    abi_path='abi/TokenDistributor.json',
+    # abi_path='abi/TokenDistributor.json',
     address=network_config.TOKEN_DISTRIBUTOR_CONTRACT_ADDRESS,
     client=execution_client,
 )
