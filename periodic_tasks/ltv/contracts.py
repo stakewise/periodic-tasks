@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class VaultUserLTVTrackerContract(ContractWrapper):
+    abi_path = 'abi/IVaultUserLtvTracker.json'
+
     def get_max_ltv_user(self, vault: ChecksumAddress) -> ChecksumAddress:
         user = self.contract.functions.vaultToUser(vault).call()
         return Web3.to_checksum_address(user)
@@ -55,7 +57,6 @@ class VaultUserLTVTrackerContract(ContractWrapper):
 
 
 vault_user_ltv_tracker_contract = VaultUserLTVTrackerContract(
-    abi_path='abi/IVaultUserLtvTracker.json',
     address=network_config.VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS,
     client=execution_client,
 )
