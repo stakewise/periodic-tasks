@@ -30,9 +30,6 @@ class TokenDistributorContract(ContractWrapper):
 class Erc20Contract(ContractWrapper):
     abi_path = 'abi/Erc20Token.json'
 
-    async def symbol(self) -> str:
-        return await self.contract.functions.symbol().call()
-
     def get_balance(
         self,
         address: ChecksumAddress,
@@ -76,20 +73,14 @@ def get_erc20_contract(address: ChecksumAddress, client: Web3 | None = None) -> 
     )
 
 
-def get_wrapped_eth_contract(
-    address: ChecksumAddress, client: Web3 | None = None
-) -> WrappedEthContract:
-    if not client:
-        client = execution_client
+def get_wrapped_eth_contract(address: ChecksumAddress, client: Web3) -> WrappedEthContract:
     return WrappedEthContract(
         address=address,
         client=client,
     )
 
 
-def get_susds_contract(address: ChecksumAddress, client: Web3 | None = None) -> SUSDsContract:
-    if not client:
-        client = execution_client
+def get_susds_contract(address: ChecksumAddress, client: Web3) -> SUSDsContract:
     return SUSDsContract(
         address=address,
         client=client,
@@ -97,7 +88,6 @@ def get_susds_contract(address: ChecksumAddress, client: Web3 | None = None) -> 
 
 
 token_distributor_contract = TokenDistributorContract(
-    # abi_path='abi/TokenDistributor.json',
     address=network_config.TOKEN_DISTRIBUTOR_CONTRACT_ADDRESS,
     client=execution_client,
 )

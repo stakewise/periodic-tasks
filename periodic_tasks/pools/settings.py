@@ -56,7 +56,6 @@ TICKER_TO_SETTINGS: dict[str, tuple[LocalAccount | None, str]] = {
     SDAI_TICKER: (SDAI_WALLET, SDAI_VAULT),
     BCSPX_TICKER: (BCSPX_WALLET, BCSPX_VAULT),
 }
-NETWORK_BASE_TICKER_ADDRESS = Web3.to_checksum_address('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 
 TOKEN_ADDRESSES = {
     MAINNET: {
@@ -76,6 +75,10 @@ TOKEN_ADDRESSES = {
         SDAI_TICKER: Web3.to_checksum_address('0xaf204776c7245bF4147c2612BF6e5972Ee483701'),
         BCSPX_TICKER: Web3.to_checksum_address('0x1e2C4fb7eDE391d116E6B41cD0608260e8801D59'),
     },
+}
+NETWORK_BASE_TICKERS = {
+    MAINNET: ETH_TICKER,
+    GNOSIS: GNO_TICKER,
 }
 
 NETWORK_BASE_TICKER_ADDRESSES = {  # vault base

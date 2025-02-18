@@ -11,11 +11,7 @@ from periodic_tasks.common.settings import network_config
 
 from .contracts import get_erc20_contract
 from .execution import approve_spending
-from .settings import (
-    COWSWAP_ORDER_PROCESSING_TIMEOUT,
-    COWSWAP_REQUEST_TIMEOUT,
-    NETWORK_BASE_TICKER_ADDRESS,
-)
+from .settings import COWSWAP_ORDER_PROCESSING_TIMEOUT, COWSWAP_REQUEST_TIMEOUT
 
 logger = logging.getLogger(__name__)
 
@@ -30,18 +26,17 @@ class CowProtocolWrapper:
         buy_token: ChecksumAddress,
         sell_amount: Wei,
     ) -> Wei | None:
-        if sell_token != NETWORK_BASE_TICKER_ADDRESS:
-            sell_token_contract = get_erc20_contract(sell_token)
-            allowance = sell_token_contract.get_allowance(
-                wallet.address, network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS
-            )
+        sell_token_contract = get_erc20_contract(sell_token)
+        allowance = sell_token_contract.get_allowance(
+            wallet.address, network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS
+        )
 
-            if allowance < sell_amount:
-                approve_spending(
-                    token=sell_token,
-                    address=network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS,
-                    wallet=wallet,
-                )
+        if allowance < sell_amount:
+            approve_spending(
+                token=sell_token,
+                address=network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS,
+                wallet=wallet,
+            )
         quote = self._quote(
             wallet=wallet,
             sell_token=sell_token,
@@ -83,7 +78,7 @@ class CowProtocolWrapper:
             'buyAmount': quote_data['buyAmount'],
             'sellTokenBalance': quote_data['sellTokenBalance'],
             'buyTokenBalance': quote_data['sellTokenBalance'],
-            'validTo': quote_data['validTo'],  # Use 0 for immediate execution
+            'validTo': quote_data['validTo'],
             'feeAmount': '0',
             'kind': quote_data['kind'],
             'partiallyFillable': quote_data['partiallyFillable'],
