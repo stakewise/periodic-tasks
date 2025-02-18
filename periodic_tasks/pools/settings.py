@@ -6,10 +6,12 @@ from web3 import Web3
 from periodic_tasks.common.clients import get_hot_wallet_account
 
 ETH_TICKER = 'ETH'
+WETH_TICKER = 'WETH'
 DAI_TICKER = 'DAI'
 GNO_TICKER = 'GNO'
 BTC_TICKER = 'BTC'
 SOL_TICKER = 'SOL'
+USDS_TICKER = 'USDS'
 SUSDS_TICKER = 'SUSDS'
 SWISE_TICKER = 'SWISE'
 SDAI_TICKER = 'SDAI'
@@ -54,13 +56,15 @@ TICKER_TO_SETTINGS: dict[str, tuple[LocalAccount | None, str]] = {
     SDAI_TICKER: (SDAI_WALLET, SDAI_VAULT),
     BCSPX_TICKER: (BCSPX_WALLET, BCSPX_VAULT),
 }
-
+NETWORK_BASE_TICKER_ADDRESS = Web3.to_checksum_address('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE')
 
 TOKEN_ADDRESSES = {
     MAINNET: {
         ETH_TICKER: Web3.to_checksum_address('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
+        WETH_TICKER: Web3.to_checksum_address('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
         BTC_TICKER: Web3.to_checksum_address('0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'),
         SOL_TICKER: Web3.to_checksum_address('0xD31a59c85aE9D8edEFeC411D448f90841571b89c'),
+        USDS_TICKER: Web3.to_checksum_address('0xdC035D45d973E3EC169d2276DDab16f1e407384F'),
         SUSDS_TICKER: Web3.to_checksum_address('0xa3931d71877c0e7a3148cb7eb4463524fec27fbd'),
         SWISE_TICKER: Web3.to_checksum_address('0x48c3399719b582dd63eb5aadf12a40b4c3f52fa2'),
     },
@@ -74,10 +78,12 @@ TOKEN_ADDRESSES = {
     },
 }
 
-NETWORK_BASE_TICKER_ADDRESSES = {
+NETWORK_BASE_TICKER_ADDRESSES = {  # vault base
     MAINNET: TOKEN_ADDRESSES[MAINNET][ETH_TICKER],
     GNOSIS: TOKEN_ADDRESSES[GNOSIS][GNO_TICKER],
 }
+
+MIN_ETH_FOR_GAS_AMOUNT = Web3.to_wei(0.01, 'ether')
 
 COWSWAP_REQUEST_TIMEOUT: int = config('COWSWAP_REQUEST_TIMEOUT', default='60', cast=int)
 COWSWAP_ORDER_PROCESSING_TIMEOUT: int = config(

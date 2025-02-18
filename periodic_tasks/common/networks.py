@@ -6,6 +6,7 @@ from sw_utils.networks import CHIADO, GNOSIS, HOLESKY, MAINNET
 from sw_utils.networks import NETWORKS as BASE_NETWORKS
 from sw_utils.networks import BaseNetworkConfig
 from web3 import Web3
+from web3.types import Wei
 
 ZERO_CHECKSUM_ADDRESS = Web3.to_checksum_address(EMPTY_ADDR_HEX)  # noqa
 
@@ -72,6 +73,8 @@ class NetworkConfig(BaseNetworkConfig):
     COWSWAP_API_URL: str | None
     COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS: ChecksumAddress
     COWSWAP_VERIFYING_CONTRACT_ADDRESS: ChecksumAddress
+    COWSWAP_ETH_FLOW_CONTRACT_ADDRESS: ChecksumAddress
+    MIN_POOL_SWAP_AMOUNT: Wei
 
 
 NETWORKS: dict[str, NetworkConfig] = {
@@ -97,6 +100,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         COWSWAP_VERIFYING_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x9008D19f58AAbD9eD0D60971565AA8510560ab41'
         ),
+        MIN_POOL_SWAP_AMOUNT=Wei(Web3.to_wei(0.01, 'ether')),
     ),
     HOLESKY: NetworkConfig(
         **asdict(BASE_NETWORKS[HOLESKY]),
@@ -116,6 +120,8 @@ NETWORKS: dict[str, NetworkConfig] = {
         COWSWAP_API_URL=None,
         COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         COWSWAP_VERIFYING_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        COWSWAP_ETH_FLOW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        MIN_POOL_SWAP_AMOUNT=Wei(0),
     ),
     GNOSIS: NetworkConfig(
         **asdict(BASE_NETWORKS[GNOSIS]),
@@ -133,6 +139,10 @@ NETWORKS: dict[str, NetworkConfig] = {
         COWSWAP_VERIFYING_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x9008D19f58AAbD9eD0D60971565AA8510560ab41'
         ),
+        COWSWAP_ETH_FLOW_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0x40A50cf069e992AA4536211B23F286eF88752187'
+        ),
+        MIN_POOL_SWAP_AMOUNT=Wei(Web3.to_wei(0.1, 'ether')),
     ),
     CHIADO: NetworkConfig(
         **asdict(BASE_NETWORKS[CHIADO]),
@@ -146,5 +156,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         COWSWAP_API_URL=None,
         COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         COWSWAP_VERIFYING_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        COWSWAP_ETH_FLOW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        MIN_POOL_SWAP_AMOUNT=Wei(0),
     ),
 }

@@ -51,11 +51,30 @@ class Erc20Contract(ContractWrapper):
         ).transact()
 
 
+class WrappedEthContract(ContractWrapper):
+    abi_path = 'abi/wrapped.json'
+
+    def deposit(self, value: Wei) -> HexBytes:
+        return self.contract.functions.deposit().transact({'value': value})
+
+
 def get_erc20_contract(address: ChecksumAddress, client: Web3 | None = None) -> Erc20Contract:
     if not client:
         client = execution_client
     return Erc20Contract(
         abi_path='abi/Erc20Token.json',
+        address=address,
+        client=client,
+    )
+
+
+def get_wrapped_eth_contract(
+    address: ChecksumAddress, client: Web3 | None = None
+) -> WrappedEthContract:
+    if not client:
+        client = execution_client
+    return WrappedEthContract(
+        abi_path='abi/WrappedEth.json',
         address=address,
         client=client,
     )
