@@ -1,5 +1,6 @@
 import logging
 
+from eth_account.signers.local import LocalAccount
 from sw_utils.networks import MAINNET
 from web3 import Web3
 from web3.types import Wei
@@ -8,12 +9,20 @@ from periodic_tasks.common.settings import NETWORK, network_config
 
 from .contracts import get_erc20_contract
 from .cow_protocol import CowProtocolWrapper
-from .execution import distribute_tokens, get_base_token_balance, wrap_ether
+from .execution import (
+    approve_spending,
+    convert_to_susds,
+    distribute_tokens,
+    get_base_token_balance,
+    wrap_ether,
+)
 from .settings import (
     MIN_ETH_FOR_GAS_AMOUNT,
     NETWORK_TICKERS,
+    SUSDS_TICKER,
     TICKER_TO_SETTINGS,
     TOKEN_ADDRESSES,
+    USDS_TICKER,
     WETH_TICKER,
 )
 from .typings import PoolSettings
@@ -23,6 +32,46 @@ logger = logging.getLogger(__name__)
 
 async def handle_pools() -> None:
     """ """
+    pool_settings = _build_pool_settings()
+    for pool in pool_settings:
+        base_to_swap = get_base_token_balance(pool.wallet.address)  # eth or gno amount
+        logger.info('')
+
+        if base_to_swap < network_config.MIN_POOL_SWAP_AMOUNT:
+            logger.info('')
+            continue
+
+        # wrap native token
+        if NETWORK == MAINNET:
+            base_to_swap = _convert_to_weth(wallet=pool.wallet, amount=base_to_swap)
+
+        swapped_amount = CowProtocolWrapper().swap(
+            wallet=pool.wallet,
+            sell_token=pool.swap_from_token,
+            buy_token=pool.swap_to_token,
+            sell_amount=base_to_swap,
+        )
+        if not swapped_amount:
+            logger.info('')
+            continue
+        logger.info('')
+
+        if NETWORK == MAINNET and pool.ticker == USDS_TICKER:
+            _convert_to_susds(pool.wallet)
+
+        distributed_token_contract = get_erc20_contract(
+            address=pool.distributed_token,
+        )
+        distributed_token_amount = distributed_token_contract.get_balance(pool.wallet.address)
+        await distribute_tokens(
+            token=pool.distributed_token,
+            amount=distributed_token_amount,
+            vault_address=pool.vault_address,
+        )
+        logger.info('')
+
+
+def _build_pool_settings() -> list[PoolSettings]:
     pool_settings: list[PoolSettings] = []
     for ticker in NETWORK_TICKERS[NETWORK]:
         wallet = TICKER_TO_SETTINGS[ticker][0]
@@ -41,41 +90,37 @@ async def handle_pools() -> None:
                     vault_address=vault_address,
                 )
             )
-    for pool in pool_settings:
-        base_to_swap = get_base_token_balance(pool.wallet.address)  # eth or gno amount
-        logger.info('')
-        # base_to_swap = int(base_to_swap / 2)  # todo
 
-        if base_to_swap < network_config.MIN_POOL_SWAP_AMOUNT:
-            logger.info('')
-            continue
+    return pool_settings
 
-        # wrap native token
-        if NETWORK == MAINNET:
-            base_to_swap = Wei(base_to_swap - MIN_ETH_FOR_GAS_AMOUNT)  # gas
-            wrap_ether(
-                wallet=pool.wallet,
-                amount=base_to_swap,
-            )
 
-            token_contract = get_erc20_contract(
-                address=TOKEN_ADDRESSES[MAINNET][WETH_TICKER],
-            )
-            base_to_swap = token_contract.get_balance(pool.wallet.address)
+def _convert_to_weth(wallet: LocalAccount, amount: Wei) -> Wei:
+    swaped_amount = Wei(amount - MIN_ETH_FOR_GAS_AMOUNT)  # gas
+    wrap_ether(
+        wallet=wallet,
+        amount=swaped_amount,
+    )
 
-        x_token_amount = CowProtocolWrapper().swap(
-            wallet=pool.wallet,
-            sell_token=pool.swap_from_token,
-            buy_token=pool.swap_to_token,
-            sell_amount=base_to_swap,
+    token_contract = get_erc20_contract(
+        address=TOKEN_ADDRESSES[MAINNET][WETH_TICKER],
+    )
+    return token_contract.get_balance(wallet.address)
+
+
+def _convert_to_susds(wallet: LocalAccount) -> None:
+    usds_token_contract = get_erc20_contract(
+        address=TOKEN_ADDRESSES[MAINNET][USDS_TICKER],
+    )
+    usds_amount = usds_token_contract.get_balance(wallet.address)
+
+    allowance = usds_token_contract.get_allowance(
+        owner=wallet.address, spender=TOKEN_ADDRESSES[MAINNET][SUSDS_TICKER]
+    )
+    if allowance < usds_amount:
+        approve_spending(
+            token=TOKEN_ADDRESSES[MAINNET][USDS_TICKER],
+            address=TOKEN_ADDRESSES[MAINNET][SUSDS_TICKER],
+            wallet=wallet,
         )
-        if not x_token_amount or x_token_amount < 1:
-            logger.info('')
-            continue
-        logger.info('')
-        await distribute_tokens(
-            token=pool.distribute_token,
-            amount=x_token_amount,  # x_token_amount or all balance of wallet
-            vault_address=pool.vault_address,
-        )
-        logger.info('')
+
+    convert_to_susds(amount=usds_amount, wallet=wallet)

@@ -21,10 +21,6 @@ class PoolSettings:
     wallet: LocalAccount
     vault_address: ChecksumAddress
 
-    # @property
-    # def wallet_address(self) -> ChecksumAddress:
-    #     return self.wallet.address
-
     @property
     def swap_from_token(self) -> ChecksumAddress:
         if NETWORK == MAINNET:
@@ -38,5 +34,5 @@ class PoolSettings:
         return TOKEN_ADDRESSES[NETWORK][self.ticker]
 
     @property
-    def distribute_token(self) -> ChecksumAddress:
+    def distributed_token(self) -> ChecksumAddress:
         return TOKEN_ADDRESSES[NETWORK][self.ticker]

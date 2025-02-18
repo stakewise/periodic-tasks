@@ -10,16 +10,21 @@ from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT, NETWOR
 from .clients import execution_client, get_account_execution_client
 from .contracts import (
     get_erc20_contract,
+    get_susds_contract,
     get_wrapped_eth_contract,
     token_distributor_contract,
 )
-from .settings import NETWORK_BASE_TICKER_ADDRESSES, TOKEN_ADDRESSES, WETH_TICKER
+from .settings import (
+    NETWORK_BASE_TICKER_ADDRESSES,
+    SUSDS_TICKER,
+    TOKEN_ADDRESSES,
+    WETH_TICKER,
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Function to get current ETH balance
 def get_base_token_balance(address: ChecksumAddress) -> Wei:
     if NETWORK == MAINNET:
         return execution_client.eth.get_balance(address)
@@ -85,4 +90,23 @@ def wrap_ether(amount: Wei, wallet: LocalAccount) -> None:
     # Check receipt status
     if not receipt['status']:
         raise RuntimeError(f'Wrap eth tx failed, tx hash: {tx.hex()}')
+    logger.info('Tx confirmed')
+
+
+def convert_to_susds(amount: Wei, wallet: LocalAccount) -> None:
+    contract = get_susds_contract(
+        address=TOKEN_ADDRESSES[MAINNET][SUSDS_TICKER], client=get_account_execution_client(wallet)
+    )
+    tx = contract.deposit(assets=amount, address=wallet.address)
+    logger.info('Convert to sUSDS transaction sent, tx hash: %s', tx.hex())
+
+    # Wait for tx receipt
+    logger.info('Waiting for tx receipt')
+    receipt = execution_client.eth.wait_for_transaction_receipt(
+        tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
+    )
+
+    # Check receipt status
+    if not receipt['status']:
+        raise RuntimeError(f'Convert to sUSDS tx failed, tx hash: {tx.hex()}')
     logger.info('Tx confirmed')

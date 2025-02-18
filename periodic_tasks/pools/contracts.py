@@ -51,9 +51,14 @@ class Erc20Contract(ContractWrapper):
         ).transact()
 
 
-class WrappedEthContract(ContractWrapper):
-    abi_path = 'abi/wrapped.json'
+class SUSDsContract(ContractWrapper):
+    abi_path = 'abi/Erc4626Token.json'
 
+    def deposit(self, assets: Wei, address: ChecksumAddress) -> HexBytes:
+        return self.contract.functions.deposit(assets, address).transact()
+
+
+class WrappedEthContract(ContractWrapper):
     def deposit(self, value: Wei) -> HexBytes:
         return self.contract.functions.deposit().transact({'value': value})
 
@@ -75,6 +80,16 @@ def get_wrapped_eth_contract(
         client = execution_client
     return WrappedEthContract(
         abi_path='abi/WrappedEth.json',
+        address=address,
+        client=client,
+    )
+
+
+def get_susds_contract(address: ChecksumAddress, client: Web3 | None = None) -> SUSDsContract:
+    if not client:
+        client = execution_client
+    return SUSDsContract(
+        abi_path='abi/Erc4626Token.json',
         address=address,
         client=client,
     )
