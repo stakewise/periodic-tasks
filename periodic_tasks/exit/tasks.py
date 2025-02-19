@@ -25,7 +25,6 @@ from .graph import (
 )
 from .typings import LeveragePosition, OsTokenExitRequest
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 WAD = 10**18

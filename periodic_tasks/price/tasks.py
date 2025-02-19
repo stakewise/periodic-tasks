@@ -9,7 +9,6 @@ from periodic_tasks.price.contracts import (
 )
 from periodic_tasks.price.settings import price_network_config
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # How long to wait since the last update before we can run another update

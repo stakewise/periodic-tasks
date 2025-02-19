@@ -5,7 +5,7 @@ from prometheus_client import Gauge, Info, start_http_server
 from sw_utils import InterruptHandler
 
 from periodic_tasks import _get_project_meta
-from periodic_tasks.common.logs import setup_gql_log_level
+from periodic_tasks.common.logs import setup_logging
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.sentry import setup_sentry
 from periodic_tasks.common.settings import (
@@ -104,6 +104,6 @@ def metrics_server() -> None:
 
 
 if __name__ == '__main__':
+    setup_logging()
     setup_sentry()
-    setup_gql_log_level()
     asyncio.run(main())

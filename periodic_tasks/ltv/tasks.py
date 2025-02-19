@@ -10,7 +10,6 @@ from .graph import (
 )
 from .typings import VaultMaxLtvUser
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # WAD is used in Solidity to work with decimals.
