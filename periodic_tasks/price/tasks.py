@@ -2,7 +2,7 @@ import logging
 import time
 from datetime import timedelta
 
-from periodic_tasks.common.clients import hot_wallet_account, setup_execution_client
+from periodic_tasks.common.clients import hot_wallet_account
 from periodic_tasks.price.clients import sender_execution_client
 from periodic_tasks.price.contracts import (
     price_feed_sender_contract,
@@ -24,11 +24,6 @@ CHECK_INTERVAL = timedelta(minutes=1)
 
 
 async def check_and_sync() -> None:
-    if not hot_wallet_account:
-        raise ValueError('Set HOT_WALLET_PRIVATE_KEY environment variable')
-
-    await setup_execution_client(sender_execution_client, hot_wallet_account)
-
     # Step 1: Check latest timestamp
     latest_timestamp = await target_price_feed_contract.functions.latestTimestamp().call()
     current_time = int(time.time())
@@ -50,7 +45,7 @@ async def check_and_sync() -> None:
     # Step 3: Sync the rate
     tx = await price_feed_sender_contract.functions.syncRate(target_chain, target_address).transact(
         {
-            'from': hot_wallet_account.address,
+            'from': hot_wallet_account.address,  # type: ignore
             'value': current_rate,
         }
     )

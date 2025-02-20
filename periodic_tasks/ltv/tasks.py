@@ -1,8 +1,6 @@
 import logging
 from decimal import Decimal
 
-from periodic_tasks.common.clients import hot_wallet_account, setup_execution_client
-
 from .clients import execution_client
 from .contracts import vault_user_ltv_tracker_contract
 from .graph import (
@@ -24,10 +22,6 @@ async def update_vault_max_ltv_user() -> None:
     """
     Finds user having maximum LTV in given vault and submits this user in the LTV Tracker contract.
     """
-    if not hot_wallet_account:
-        raise ValueError('Set HOT_WALLET_PRIVATE_KEY environment variable')
-    await setup_execution_client(execution_client, hot_wallet_account)
-
     block = await execution_client.eth.get_block('finalized')
     logger.debug('Current block: %d', block['number'])
 

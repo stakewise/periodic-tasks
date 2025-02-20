@@ -3,7 +3,6 @@ import logging
 from eth_typing import ChecksumAddress
 from web3.types import BlockNumber
 
-from periodic_tasks.common.clients import hot_wallet_account, setup_execution_client
 from periodic_tasks.common.typings import HarvestParams
 from periodic_tasks.ltv.graph import graph_get_harvest_params
 
@@ -37,10 +36,6 @@ async def force_exits() -> None:
     Monitor leverage positions and trigger exits/claims for those
     that approach the liquidation threshold.
     """
-    if not hot_wallet_account:
-        raise ValueError('Set HOT_WALLET_PRIVATE_KEY environment variable')
-    await setup_execution_client(execution_client, hot_wallet_account)
-
     block = await execution_client.eth.get_block('finalized')
     logger.debug('Current block: %d', block['number'])
     block_number = block['number']
