@@ -2,7 +2,8 @@ import logging
 import time
 from datetime import timedelta
 
-from periodic_tasks.price.clients import hot_wallet_account, sender_execution_client
+from periodic_tasks.common.clients import hot_wallet_account
+from periodic_tasks.price.clients import sender_execution_client
 from periodic_tasks.price.contracts import (
     price_feed_sender_contract,
     target_price_feed_contract,
@@ -22,11 +23,9 @@ MAX_WAITING_TIME = timedelta(hours=1)
 CHECK_INTERVAL = timedelta(minutes=1)
 
 
-def check_and_sync() -> None:
-    if not hot_wallet_account:
-        raise ValueError('Set HOT_WALLET_PRIVATE_KEY environment variable')
+async def check_and_sync() -> None:
     # Step 1: Check latest timestamp
-    latest_timestamp = target_price_feed_contract.functions.latestTimestamp().call()
+    latest_timestamp = await target_price_feed_contract.functions.latestTimestamp().call()
     current_time = int(time.time())
     update_interval_sec = UPDATE_INTERVAL.total_seconds()
 
@@ -41,18 +40,18 @@ def check_and_sync() -> None:
     target_chain = price_network_config.TARGET_CHAIN
     target_address = price_network_config.TARGET_ADDRESS
 
-    current_rate = price_feed_sender_contract.functions.quoteRateSync(target_chain).call()
+    current_rate = await price_feed_sender_contract.functions.quoteRateSync(target_chain).call()
 
     # Step 3: Sync the rate
-    tx = price_feed_sender_contract.functions.syncRate(target_chain, target_address).transact(
+    tx = await price_feed_sender_contract.functions.syncRate(target_chain, target_address).transact(
         {
-            'from': hot_wallet_account.address,
+            'from': hot_wallet_account.address,  # type: ignore
             'value': current_rate,
         }
     )
 
     logger.info('Sync transaction sent: %s', tx.hex())
-    receipt = sender_execution_client.eth.wait_for_transaction_receipt(tx)
+    receipt = await sender_execution_client.eth.wait_for_transaction_receipt(tx)
 
     if not receipt['status']:
         raise RuntimeError(f'Sync transaction failed, tx hash: {tx.hex()}')
@@ -65,7 +64,7 @@ def check_and_sync() -> None:
     max_waiting_time_sec = int(MAX_WAITING_TIME.total_seconds())
 
     while int(time.time()) - start_time < max_waiting_time_sec:
-        new_timestamp = target_price_feed_contract.functions.latestTimestamp().call()
+        new_timestamp = await target_price_feed_contract.functions.latestTimestamp().call()
         if new_timestamp > latest_timestamp:
             logger.info('Timestamp updated on the target chain.')
             return

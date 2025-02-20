@@ -5,8 +5,8 @@ from pathlib import Path
 
 from eth_typing import ChecksumAddress, HexStr
 from hexbytes import HexBytes
-from web3 import Web3
-from web3.contract.contract import ContractEvents, ContractFunctions
+from web3 import AsyncWeb3
+from web3.contract.async_contract import AsyncContractEvents, AsyncContractFunctions
 from web3.types import Wei
 
 from .typings import HarvestParams
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class ContractWrapper:
-    def __init__(self, abi_path: str, address: ChecksumAddress, client: Web3):
+    def __init__(self, abi_path: str, address: ChecksumAddress, client: AsyncWeb3):
         self.address = address
         self.contract = client.eth.contract(address=address, abi=self._load_abi(abi_path))
 
@@ -29,11 +29,11 @@ class ContractWrapper:
             return json.load(f)
 
     @property
-    def functions(self) -> ContractFunctions:
+    def functions(self) -> AsyncContractFunctions:
         return self.contract.functions
 
     @property
-    def events(self) -> ContractEvents:
+    def events(self) -> AsyncContractEvents:
         return self.contract.events
 
     def encode_abi(self, fn_name: str, args: list | None = None) -> HexStr:

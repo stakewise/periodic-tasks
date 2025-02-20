@@ -37,7 +37,7 @@ async def force_exits() -> None:
     Monitor leverage positions and trigger exits/claims for those
     that approach the liquidation threshold.
     """
-    block = execution_client.eth.get_block('finalized')
+    block = await execution_client.eth.get_block('finalized')
     logger.debug('Current block: %d', block['number'])
     block_number = block['number']
     await handle_leverage_positions(block_number)
@@ -61,7 +61,7 @@ async def handle_leverage_positions(block_number: BlockNumber) -> None:
             harvest_params = await graph_get_harvest_params(position.vault)
             vault_to_harvest_params[position.vault] = harvest_params
 
-        handle_leverage_position(
+        await handle_leverage_position(
             position=position,
             harvest_params=harvest_params,
             block_number=block_number,
@@ -88,7 +88,7 @@ async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
             vault,
             position_owner,
         )
-        tx_hash = claim_exited_assets(
+        tx_hash = await claim_exited_assets(
             vault=vault,
             user=position_owner,
             exit_request=os_token_exit_request.exit_request,
@@ -104,9 +104,9 @@ async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
 
 
 async def fetch_leverage_positions(block_number: BlockNumber) -> list[LeveragePosition]:
-    strategy_id = leverage_strategy_contract.strategy_id()
-    borrow_ltv = strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
-    vault_ltv = strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
+    strategy_id = await leverage_strategy_contract.strategy_id()
+    borrow_ltv = await strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
+    vault_ltv = await strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
     all_leverage_positions = await graph_get_leverage_positions(block_number=block_number)
     # Get aave positions by borrow ltv
     aave_positions = [pos for pos in all_leverage_positions if pos.borrow_ltv > borrow_ltv]
@@ -130,7 +130,7 @@ async def fetch_leverage_positions(block_number: BlockNumber) -> list[LeveragePo
 
 
 async def fetch_ostoken_exit_requests(block_number: BlockNumber) -> list[OsTokenExitRequest]:
-    max_ltv_percent = ostoken_vault_escrow_contract.liq_threshold_percent() / WAD
+    max_ltv_percent = await ostoken_vault_escrow_contract.liq_threshold_percent() / WAD
     # Adjust ltv percent to exit before liquidation
     max_ltv_percent = max_ltv_percent - max_ltv_percent / LTV_PERCENT_DELTA
     exit_requests = await graph_ostoken_exit_requests(max_ltv_percent, block_number=block_number)
@@ -141,14 +141,14 @@ async def fetch_ostoken_exit_requests(block_number: BlockNumber) -> list[OsToken
     return exit_requests
 
 
-def handle_leverage_position(
+async def handle_leverage_position(
     position: LeveragePosition, harvest_params: HarvestParams | None, block_number: BlockNumber
 ) -> None:
     """
     Submit force exit for leverage position.
     Also check for position active exit request and claim assets if possible.
     """
-    if not can_force_enter_exit_queue(
+    if not await can_force_enter_exit_queue(
         vault=position.vault,
         user=position.user,
         harvest_params=harvest_params,
@@ -168,7 +168,7 @@ def handle_leverage_position(
             position.vault,
             position.user,
         )
-        tx_hash = claim_exited_assets(
+        tx_hash = await claim_exited_assets(
             vault=position.vault,
             user=position.user,
             exit_request=position.exit_request,
@@ -190,7 +190,7 @@ def handle_leverage_position(
     )
 
     # recheck because position state has changed after claiming assets
-    if not can_force_enter_exit_queue(
+    if not await can_force_enter_exit_queue(
         vault=position.vault,
         user=position.user,
         harvest_params=harvest_params,
@@ -203,7 +203,7 @@ def handle_leverage_position(
         )
         return
 
-    tx_hash = force_enter_exit_queue(
+    tx_hash = await force_enter_exit_queue(
         vault=position.vault,
         user=position.user,
         harvest_params=harvest_params,
