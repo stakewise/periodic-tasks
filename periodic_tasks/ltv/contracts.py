@@ -14,18 +14,18 @@ logger = logging.getLogger(__name__)
 
 
 class VaultUserLTVTrackerContract(ContractWrapper):
-    def get_max_ltv_user(self, vault: ChecksumAddress) -> ChecksumAddress:
-        user = self.contract.functions.vaultToUser(vault).call()
+    async def get_max_ltv_user(self, vault: ChecksumAddress) -> ChecksumAddress:
+        user = await self.contract.functions.vaultToUser(vault).call()
         return Web3.to_checksum_address(user)
 
-    def get_vault_max_ltv(
+    async def get_vault_max_ltv(
         self, vault: ChecksumAddress, harvest_params: HarvestParams | None
     ) -> int:
         # Create zero harvest params in case the vault has no rewards yet
         if harvest_params is None:
             harvest_params = self._get_zero_harvest_params()
 
-        return self.contract.functions.getVaultMaxLtv(
+        return await self.contract.functions.getVaultMaxLtv(
             vault,
             (
                 harvest_params.rewards_root,
@@ -35,14 +35,14 @@ class VaultUserLTVTrackerContract(ContractWrapper):
             ),
         ).call()
 
-    def update_vault_max_ltv_user(
+    async def update_vault_max_ltv_user(
         self, vault: ChecksumAddress, user: ChecksumAddress, harvest_params: HarvestParams | None
     ) -> HexBytes:
         # Create zero harvest params in case the vault has no rewards yet
         if harvest_params is None:
             harvest_params = self._get_zero_harvest_params()
 
-        return self.contract.functions.updateVaultMaxLtvUser(
+        return await self.contract.functions.updateVaultMaxLtvUser(
             vault,
             user,
             (
