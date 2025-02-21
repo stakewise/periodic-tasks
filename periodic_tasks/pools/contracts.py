@@ -2,7 +2,7 @@ import logging
 
 from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
-from web3 import Web3
+from web3 import AsyncWeb3
 from web3.types import Wei
 
 from periodic_tasks.common.contracts import ContractWrapper
@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 class TokenDistributorContract(ContractWrapper):
     abi_path = 'abi/TokenDistributor.json'
 
-    def distribute_one_time(
+    async def distribute_one_time(
         self, vault: ChecksumAddress, token: ChecksumAddress, amount: Wei
     ) -> HexBytes:
-        return self.contract.functions.distributeOneTime(
+        return await self.contract.functions.distributeOneTime(
             token,
             amount,
             '',
@@ -30,21 +30,21 @@ class TokenDistributorContract(ContractWrapper):
 class Erc20Contract(ContractWrapper):
     abi_path = 'abi/Erc20Token.json'
 
-    def get_balance(
+    async def get_balance(
         self,
         address: ChecksumAddress,
     ) -> Wei:
-        return self.contract.functions.balanceOf(address).call()
+        return await self.contract.functions.balanceOf(address).call()
 
-    def get_allowance(
+    async def get_allowance(
         self,
         owner: ChecksumAddress,
         spender: ChecksumAddress,
     ) -> Wei:
-        return self.contract.functions.allowance(owner, spender).call()
+        return await self.contract.functions.allowance(owner, spender).call()
 
-    def approve(self, address: ChecksumAddress, value: Wei) -> HexBytes:
-        return self.contract.functions.approve(
+    async def approve(self, address: ChecksumAddress, value: Wei) -> HexBytes:
+        return await self.contract.functions.approve(
             address,
             value,
         ).transact()
@@ -53,18 +53,18 @@ class Erc20Contract(ContractWrapper):
 class SUSDsContract(ContractWrapper):
     abi_path = 'abi/Erc4626Token.json'
 
-    def deposit(self, assets: Wei, address: ChecksumAddress) -> HexBytes:
-        return self.contract.functions.deposit(assets, address).transact()
+    async def deposit(self, assets: Wei, address: ChecksumAddress) -> HexBytes:
+        return await self.contract.functions.deposit(assets, address).transact()
 
 
 class WrappedEthContract(ContractWrapper):
     abi_path = 'abi/WrappedEth.json'
 
-    def deposit(self, value: Wei) -> HexBytes:
-        return self.contract.functions.deposit().transact({'value': value})
+    async def deposit(self, value: Wei) -> HexBytes:
+        return await self.contract.functions.deposit().transact({'value': value})
 
 
-def get_erc20_contract(address: ChecksumAddress, client: Web3 | None = None) -> Erc20Contract:
+def get_erc20_contract(address: ChecksumAddress, client: AsyncWeb3 | None = None) -> Erc20Contract:
     if not client:
         client = execution_client
     return Erc20Contract(
@@ -73,14 +73,14 @@ def get_erc20_contract(address: ChecksumAddress, client: Web3 | None = None) -> 
     )
 
 
-def get_wrapped_eth_contract(address: ChecksumAddress, client: Web3) -> WrappedEthContract:
+def get_wrapped_eth_contract(address: ChecksumAddress, client: AsyncWeb3) -> WrappedEthContract:
     return WrappedEthContract(
         address=address,
         client=client,
     )
 
 
-def get_susds_contract(address: ChecksumAddress, client: Web3) -> SUSDsContract:
+def get_susds_contract(address: ChecksumAddress, client: AsyncWeb3) -> SUSDsContract:
     return SUSDsContract(
         address=address,
         client=client,

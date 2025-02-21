@@ -59,7 +59,7 @@ metrics.set_app_version()
 
 
 async def liquidation_metrics() -> None:
-    block = execution_client.eth.get_block('finalized')
+    block = await execution_client.eth.get_block('finalized')
     block_number = block['number']
     metrics.execution_block.labels(network=NETWORK).set(block_number)
 

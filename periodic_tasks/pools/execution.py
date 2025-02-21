@@ -25,26 +25,26 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def get_base_token_balance(address: ChecksumAddress) -> Wei:
+async def get_base_token_balance(address: ChecksumAddress) -> Wei:
     if NETWORK == MAINNET:
-        return execution_client.eth.get_balance(address)
+        return await execution_client.eth.get_balance(address)
     token_contract = get_erc20_contract(
         address=NETWORK_BASE_TICKER_ADDRESSES[NETWORK],
     )
-    return token_contract.get_balance(address)
+    return await token_contract.get_balance(address)
 
 
 async def distribute_tokens(
     token: ChecksumAddress, amount: Wei, vault_address: ChecksumAddress
 ) -> None:
-    tx = token_distributor_contract.distribute_one_time(
+    tx = await token_distributor_contract.distribute_one_time(
         token=token, amount=amount, vault=vault_address
     )
     logger.info('Distribution transaction sent, tx hash: %s', tx.hex())
 
     # Wait for tx receipt
     logger.info('Waiting for tx receipt')
-    receipt = execution_client.eth.wait_for_transaction_receipt(
+    receipt = await execution_client.eth.wait_for_transaction_receipt(
         tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
     )
 
@@ -54,17 +54,18 @@ async def distribute_tokens(
     logger.info('Tx confirmed')
 
 
-def approve_spending(
+async def approve_spending(
     address: ChecksumAddress, token: ChecksumAddress, wallet: LocalAccount
 ) -> None:
-    contract = get_erc20_contract(address=token, client=get_account_execution_client(wallet))
+    client = await get_account_execution_client(wallet)
+    contract = get_erc20_contract(address=token, client=client)
     MAX_VALUE = Wei(2**256 - 1)
-    tx = contract.approve(address=address, value=MAX_VALUE)
+    tx = await contract.approve(address=address, value=MAX_VALUE)
     logger.info('Approve transaction sent, tx hash: %s', tx.hex())
 
     # Wait for tx receipt
     logger.info('Waiting for tx receipt')
-    receipt = execution_client.eth.wait_for_transaction_receipt(
+    receipt = await execution_client.eth.wait_for_transaction_receipt(
         tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
     )
 
@@ -74,16 +75,17 @@ def approve_spending(
     logger.info('Tx confirmed')
 
 
-def wrap_ether(amount: Wei, wallet: LocalAccount) -> None:
+async def wrap_ether(amount: Wei, wallet: LocalAccount) -> None:
+    client = await get_account_execution_client(wallet)
     contract = get_wrapped_eth_contract(
-        address=TOKEN_ADDRESSES[MAINNET][WETH_TICKER], client=get_account_execution_client(wallet)
+        address=TOKEN_ADDRESSES[MAINNET][WETH_TICKER], client=client
     )
-    tx = contract.deposit(value=amount)
+    tx = await contract.deposit(value=amount)
     logger.info('Wrap eth transaction sent, tx hash: %s', tx.hex())
 
     # Wait for tx receipt
     logger.info('Waiting for tx receipt')
-    receipt = execution_client.eth.wait_for_transaction_receipt(
+    receipt = await execution_client.eth.wait_for_transaction_receipt(
         tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
     )
 
@@ -93,16 +95,15 @@ def wrap_ether(amount: Wei, wallet: LocalAccount) -> None:
     logger.info('Tx confirmed')
 
 
-def convert_to_susds(amount: Wei, wallet: LocalAccount) -> None:
-    contract = get_susds_contract(
-        address=TOKEN_ADDRESSES[MAINNET][SUSDS_TICKER], client=get_account_execution_client(wallet)
-    )
-    tx = contract.deposit(assets=amount, address=wallet.address)
+async def convert_to_susds(amount: Wei, wallet: LocalAccount) -> None:
+    client = await get_account_execution_client(wallet)
+    contract = get_susds_contract(address=TOKEN_ADDRESSES[MAINNET][SUSDS_TICKER], client=client)
+    tx = await contract.deposit(assets=amount, address=wallet.address)
     logger.info('Convert to sUSDS transaction sent, tx hash: %s', tx.hex())
 
     # Wait for tx receipt
     logger.info('Waiting for tx receipt')
-    receipt = execution_client.eth.wait_for_transaction_receipt(
+    receipt = await execution_client.eth.wait_for_transaction_receipt(
         tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
     )
 

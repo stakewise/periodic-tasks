@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def can_force_enter_exit_queue(
+async def can_force_enter_exit_queue(
     vault: ChecksumAddress,
     user: ChecksumAddress,
     harvest_params: HarvestParams | None,
@@ -23,7 +23,7 @@ def can_force_enter_exit_queue(
 ) -> bool:
     calls = []
     update_state_call = None
-    if harvest_params and keeper_contract.can_harvest(vault, block_number):
+    if harvest_params and await keeper_contract.can_harvest(vault, block_number):
         update_state_call = (
             leverage_strategy_contract.address,
             _encode_update_state_call(vault, harvest_params),
@@ -34,13 +34,13 @@ def can_force_enter_exit_queue(
         fn_name='canForceEnterExitQueue', args=[vault, user]
     )
     calls.append((leverage_strategy_contract.address, can_force_enter_exit_queue_call))
-    _, response = multicall_contract.aggregate(calls, block_number)
+    _, response = await multicall_contract.aggregate(calls, block_number)
     if update_state_call:
         response.pop(0)
     return bool(Web3.to_int(response.pop(0)))
 
 
-def claim_exited_assets(
+async def claim_exited_assets(
     vault: ChecksumAddress,
     user: ChecksumAddress,
     exit_request: ExitRequest,
@@ -48,7 +48,7 @@ def claim_exited_assets(
     block_number: BlockNumber,
 ) -> HexStr | None:
     calls = []
-    if harvest_params and keeper_contract.can_harvest(vault, block_number):
+    if harvest_params and await keeper_contract.can_harvest(vault, block_number):
         update_state_call = (
             leverage_strategy_contract.address,
             _encode_update_state_call(vault, harvest_params),
@@ -65,7 +65,7 @@ def claim_exited_assets(
     )
     calls.append((leverage_strategy_contract.address, claim_call))
     try:
-        tx = multicall_contract.functions.aggregate(calls).transact()
+        tx = await multicall_contract.functions.aggregate(calls).transact()
     except Exception as e:
         logger.error(
             'Failed to claim exited assets for leverage position: vault=%s, user=%s %s...',
@@ -79,7 +79,7 @@ def claim_exited_assets(
 
     tx_hash = Web3.to_hex(tx)
     logger.info('Waiting for transaction %s confirmation', tx_hash)
-    tx_receipt = execution_client.eth.wait_for_transaction_receipt(
+    tx_receipt = await execution_client.eth.wait_for_transaction_receipt(
         tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
     )
     if not tx_receipt['status']:
@@ -93,14 +93,14 @@ def claim_exited_assets(
     return tx_hash
 
 
-def force_enter_exit_queue(
+async def force_enter_exit_queue(
     vault: ChecksumAddress,
     user: ChecksumAddress,
     harvest_params: HarvestParams | None,
     block_number: BlockNumber,
 ) -> HexStr | None:
     calls = []
-    if harvest_params and keeper_contract.can_harvest(vault, block_number):
+    if harvest_params and await keeper_contract.can_harvest(vault, block_number):
         update_state_call = (
             leverage_strategy_contract.address,
             _encode_update_state_call(vault, harvest_params),
@@ -113,7 +113,7 @@ def force_enter_exit_queue(
     )
     calls.append((leverage_strategy_contract.address, force_enter_call))
     try:
-        tx = multicall_contract.functions.aggregate(calls).transact()
+        tx = await multicall_contract.functions.aggregate(calls).transact()
     except Exception as e:
         logger.error('Failed to force enter exit queue; vault=%s, user=%s %s: ', vault, user, e)
         logger.exception(e)
@@ -121,7 +121,7 @@ def force_enter_exit_queue(
 
     tx_hash = Web3.to_hex(tx)
     logger.info('Waiting for transaction %s confirmation', tx_hash)
-    tx_receipt = execution_client.eth.wait_for_transaction_receipt(
+    tx_receipt = await execution_client.eth.wait_for_transaction_receipt(
         tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
     )
     if not tx_receipt['status']:

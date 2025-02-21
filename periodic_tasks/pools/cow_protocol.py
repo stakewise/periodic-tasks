@@ -19,7 +19,7 @@ EMPTY_APP_DATA = '0x000000000000000000000000000000000000000000000000000000000000
 
 
 class CowProtocolWrapper:
-    def swap(
+    async def swap(
         self,
         wallet: LocalAccount,
         sell_token: ChecksumAddress,
@@ -27,12 +27,12 @@ class CowProtocolWrapper:
         sell_amount: Wei,
     ) -> Wei | None:
         sell_token_contract = get_erc20_contract(sell_token)
-        allowance = sell_token_contract.get_allowance(
+        allowance = await sell_token_contract.get_allowance(
             wallet.address, network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS
         )
 
         if allowance < sell_amount:
-            approve_spending(
+            await approve_spending(
                 token=sell_token,
                 address=network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS,
                 wallet=wallet,

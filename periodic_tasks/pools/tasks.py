@@ -42,7 +42,7 @@ async def handle_pools() -> None:
     """
     pool_settings = _build_pool_settings()
     for pool in pool_settings:
-        base_to_swap = get_base_token_balance(pool.wallet.address)  # eth or gno amount
+        base_to_swap = await get_base_token_balance(pool.wallet.address)  # eth or gno amount
         logger.info(
             'Processing %s %s for vault %s...',
             Web3.from_wei(base_to_swap, 'ether'),
@@ -56,7 +56,7 @@ async def handle_pools() -> None:
 
         # wrap native eth for mainnet
         if NETWORK == MAINNET:
-            base_to_swap = _convert_to_weth(wallet=pool.wallet, amount=base_to_swap)
+            base_to_swap = await _convert_to_weth(wallet=pool.wallet, amount=base_to_swap)
 
         swapped_amount = CowProtocolWrapper().swap(
             wallet=pool.wallet,
@@ -69,12 +69,12 @@ async def handle_pools() -> None:
             continue
 
         if pool.ticker == USDS_TICKER:
-            _convert_to_susds(pool.wallet)
+            await _convert_to_susds(pool.wallet)
 
         distributed_token_contract = get_erc20_contract(
             address=pool.distributed_token,
         )
-        distributed_token_amount = distributed_token_contract.get_balance(pool.wallet.address)
+        distributed_token_amount = await distributed_token_contract.get_balance(pool.wallet.address)
         logger.info(
             'Distributing %s %s for vault %s...',
             Web3.from_wei(distributed_token_amount, 'ether'),
@@ -113,10 +113,10 @@ def _build_pool_settings() -> list[PoolSettings]:
     return pool_settings
 
 
-def _convert_to_weth(wallet: LocalAccount, amount: Wei) -> Wei:
+async def _convert_to_weth(wallet: LocalAccount, amount: Wei) -> Wei:
     """Convert ETH to WETH"""
     converted_amount = Wei(amount - MIN_ETH_FOR_GAS_AMOUNT)
-    wrap_ether(
+    await wrap_ether(
         wallet=wallet,
         amount=converted_amount,
     )
@@ -124,24 +124,24 @@ def _convert_to_weth(wallet: LocalAccount, amount: Wei) -> Wei:
     token_contract = get_erc20_contract(
         address=TOKEN_ADDRESSES[MAINNET][WETH_TICKER],
     )
-    return token_contract.get_balance(wallet.address)
+    return await token_contract.get_balance(wallet.address)
 
 
-def _convert_to_susds(wallet: LocalAccount) -> None:
+async def _convert_to_susds(wallet: LocalAccount) -> None:
     """Convert USDS to sUSDS"""
     usds_token_contract = get_erc20_contract(
         address=TOKEN_ADDRESSES[MAINNET][USDS_TICKER],
     )
-    usds_amount = usds_token_contract.get_balance(wallet.address)
+    usds_amount = await usds_token_contract.get_balance(wallet.address)
 
-    allowance = usds_token_contract.get_allowance(
+    allowance = await usds_token_contract.get_allowance(
         owner=wallet.address, spender=TOKEN_ADDRESSES[MAINNET][SUSDS_TICKER]
     )
     if allowance < usds_amount:
-        approve_spending(
+        await approve_spending(
             token=TOKEN_ADDRESSES[MAINNET][USDS_TICKER],
             address=TOKEN_ADDRESSES[MAINNET][SUSDS_TICKER],
             wallet=wallet,
         )
 
-    convert_to_susds(amount=usds_amount, wallet=wallet)
+    await convert_to_susds(amount=usds_amount, wallet=wallet)
