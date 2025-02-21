@@ -5,6 +5,7 @@ from hexbytes import HexBytes
 from web3 import Web3
 
 from periodic_tasks.common.contracts import ContractWrapper
+from periodic_tasks.common.execution import transaction_gas_wrapper
 from periodic_tasks.common.settings import network_config
 from periodic_tasks.common.typings import HarvestParams
 
@@ -42,7 +43,7 @@ class VaultUserLTVTrackerContract(ContractWrapper):
         if harvest_params is None:
             harvest_params = self._get_zero_harvest_params()
 
-        return await self.contract.functions.updateVaultMaxLtvUser(
+        tx_function = self.contract.functions.updateVaultMaxLtvUser(
             vault,
             user,
             (
@@ -51,7 +52,8 @@ class VaultUserLTVTrackerContract(ContractWrapper):
                 harvest_params.unlocked_mev_reward,
                 harvest_params.proof,
             ),
-        ).transact()
+        )
+        return await transaction_gas_wrapper(client=self.contract.w3, tx_function=tx_function)
 
 
 vault_user_ltv_tracker_contract = VaultUserLTVTrackerContract(

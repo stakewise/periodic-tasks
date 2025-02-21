@@ -2,7 +2,10 @@ import logging
 import time
 from datetime import timedelta
 
+from web3.types import TxParams
+
 from periodic_tasks.common.clients import hot_wallet_account
+from periodic_tasks.common.execution import transaction_gas_wrapper
 from periodic_tasks.price.clients import sender_execution_client
 from periodic_tasks.price.contracts import (
     price_feed_sender_contract,
@@ -43,11 +46,13 @@ async def check_and_sync() -> None:
     current_rate = await price_feed_sender_contract.functions.quoteRateSync(target_chain).call()
 
     # Step 3: Sync the rate
-    tx = await price_feed_sender_contract.functions.syncRate(target_chain, target_address).transact(
-        {
-            'from': hot_wallet_account.address,  # type: ignore
-            'value': current_rate,
-        }
+    tx_function = price_feed_sender_contract.functions.syncRate(target_chain, target_address)
+    tx_params: TxParams = {
+        'from': hot_wallet_account.address,  # type: ignore
+        'value': current_rate,
+    }
+    tx = await transaction_gas_wrapper(
+        client=price_feed_sender_contract.contract.w3, tx_function=tx_function, tx_params=tx_params
     )
 
     logger.info('Sync transaction sent: %s', tx.hex())
