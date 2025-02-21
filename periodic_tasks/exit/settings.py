@@ -1,6 +1,6 @@
 from decouple import config
 
-LTV_PERCENT_DELTA: int = config('LTV_PERCENT_DELTA', default='0.0002', cast=float)
+LTV_PERCENT_DELTA: float = config('LTV_PERCENT_DELTA', default='0.0002', cast=float)
 
 # graph
 GRAPH_API_URL: str = config('GRAPH_API_URL')
