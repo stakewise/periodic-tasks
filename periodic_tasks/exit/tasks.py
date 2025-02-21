@@ -132,7 +132,7 @@ async def fetch_leverage_positions(block_number: BlockNumber) -> list[LeveragePo
 async def fetch_ostoken_exit_requests(block_number: BlockNumber) -> list[OsTokenExitRequest]:
     max_ltv_percent = await ostoken_vault_escrow_contract.liq_threshold_percent() / WAD
     # Adjust ltv percent to exit before liquidation
-    max_ltv_percent = max_ltv_percent - max_ltv_percent / LTV_PERCENT_DELTA
+    max_ltv_percent = max_ltv_percent - max_ltv_percent * LTV_PERCENT_DELTA
     exit_requests = await graph_ostoken_exit_requests(max_ltv_percent, block_number=block_number)
     exit_requests = [
         exit_request for exit_request in exit_requests if exit_request.exit_request.can_be_claimed
