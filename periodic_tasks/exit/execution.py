@@ -4,6 +4,7 @@ from eth_typing import ChecksumAddress, HexStr
 from web3 import Web3
 from web3.types import BlockNumber
 
+from periodic_tasks.common.execution import transaction_gas_wrapper
 from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
 from periodic_tasks.common.typings import HarvestParams
 
@@ -65,7 +66,10 @@ async def claim_exited_assets(
     )
     calls.append((leverage_strategy_contract.address, claim_call))
     try:
-        tx = await multicall_contract.functions.aggregate(calls).transact()
+        tx_function = multicall_contract.functions.aggregate(calls)
+        tx = await transaction_gas_wrapper(
+            client=multicall_contract.contract.w3, tx_function=tx_function
+        )
     except Exception as e:
         logger.error(
             'Failed to claim exited assets for leverage position: vault=%s, user=%s %s...',
@@ -113,7 +117,10 @@ async def force_enter_exit_queue(
     )
     calls.append((leverage_strategy_contract.address, force_enter_call))
     try:
-        tx = await multicall_contract.functions.aggregate(calls).transact()
+        tx_function = multicall_contract.functions.aggregate(calls)
+        tx = await transaction_gas_wrapper(
+            client=multicall_contract.contract.w3, tx_function=tx_function
+        )
     except Exception as e:
         logger.error('Failed to force enter exit queue; vault=%s, user=%s %s: ', vault, user, e)
         logger.exception(e)
