@@ -128,7 +128,7 @@ async def _convert_to_weth(wallet: LocalAccount, amount: Wei) -> Wei:
 
 
 async def _convert_to_susds(wallet: LocalAccount) -> None:
-    """Convert USDS to sUSDS"""
+    """Convert USDS to sUSDS via contract deposit"""
     usds_token_contract = get_erc20_contract(
         address=TOKEN_ADDRESSES[MAINNET][USDS_TICKER],
     )

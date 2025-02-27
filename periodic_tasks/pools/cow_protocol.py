@@ -26,17 +26,12 @@ class CowProtocolWrapper:
         buy_token: ChecksumAddress,
         sell_amount: Wei,
     ) -> Wei | None:
-        sell_token_contract = get_erc20_contract(sell_token)
-        allowance = await sell_token_contract.get_allowance(
-            wallet.address, network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS
+        await self._approve_sell_token(
+            wallet=wallet,
+            sell_token=sell_token,
+            sell_amount=sell_amount,
         )
 
-        if allowance < sell_amount:
-            await approve_spending(
-                token=sell_token,
-                address=network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS,
-                wallet=wallet,
-            )
         quote = self._quote(
             wallet=wallet,
             sell_token=sell_token,
@@ -64,6 +59,61 @@ class CowProtocolWrapper:
                 logging.error('Failed to process cowswap order %s', order_uid)
                 return None
             time.sleep(0.5)
+
+    async def _approve_sell_token(
+        self,
+        wallet: LocalAccount,
+        sell_token: ChecksumAddress,
+        sell_amount: Wei,
+    ) -> None:
+        sell_token_contract = get_erc20_contract(sell_token)
+        allowance = await sell_token_contract.get_allowance(
+            wallet.address, network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS
+        )
+
+        if allowance < sell_amount:
+            await approve_spending(
+                token=sell_token,
+                address=network_config.COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS,
+                wallet=wallet,
+            )
+
+    def _quote(
+        self,
+        wallet: LocalAccount,
+        sell_token: ChecksumAddress,
+        buy_token: ChecksumAddress,
+        sell_amount: Wei,
+    ) -> dict | None:
+        payload = {
+            'sellToken': sell_token,
+            'buyToken': buy_token,
+            'receiver': wallet.address,
+            'appData': EMPTY_APP_DATA,
+            'sellTokenBalance': 'erc20',
+            'buyTokenBalance': 'erc20',
+            'from': wallet.address,
+            'priceQuality': 'verified',
+            'signingScheme': 'eip712',
+            'onchainOrder': False,
+            'kind': 'sell',
+            'sellAmountBeforeFee': str(sell_amount),
+        }
+        response = requests.post(
+            f'{network_config.COWSWAP_API_URL}/api/v1/quote',
+            json=payload,
+            timeout=COWSWAP_REQUEST_TIMEOUT,
+        )
+        if response.status_code == 200:
+            logger.info('Quoite submitted successfully!')
+            data = response.json()
+
+            if not data.get('verified'):
+                logger.error('!')
+                return None
+            return data
+        logger.error('Failed to quote order.: %s', response.text)
+        return None
 
     def _submit_order(
         self,
@@ -103,43 +153,6 @@ class CowProtocolWrapper:
             return response.json()
 
         logger.error('Failed to submit order.: %s', response.text)
-        return None
-
-    def _quote(
-        self,
-        wallet: LocalAccount,
-        sell_token: ChecksumAddress,
-        buy_token: ChecksumAddress,
-        sell_amount: Wei,
-    ) -> dict | None:
-        payload = {
-            'sellToken': sell_token,
-            'buyToken': buy_token,
-            'receiver': wallet.address,
-            'appData': EMPTY_APP_DATA,
-            'sellTokenBalance': 'erc20',
-            'buyTokenBalance': 'erc20',
-            'from': wallet.address,
-            'priceQuality': 'verified',
-            'signingScheme': 'eip712',
-            'onchainOrder': False,
-            'kind': 'sell',
-            'sellAmountBeforeFee': str(sell_amount),
-        }
-        response = requests.post(
-            f'{network_config.COWSWAP_API_URL}/api/v1/quote',
-            json=payload,
-            timeout=COWSWAP_REQUEST_TIMEOUT,
-        )
-        if response.status_code == 200:
-            logger.info('Quoite submitted successfully!')
-            data = response.json()
-
-            if not data.get('verified'):
-                logger.error('!')
-                return None
-            return data
-        logger.error('Failed to quote order.: %s', response.text)
         return None
 
     def _check_order(self, order_uid: str) -> Wei | None:
