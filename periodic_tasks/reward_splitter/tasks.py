@@ -1,6 +1,6 @@
 import logging
 
-from eth_typing import ChecksumAddress
+from eth_typing import ChecksumAddress, HexStr
 from web3 import Web3
 
 from periodic_tasks.common.graph import get_multiple_harvest_params
@@ -11,9 +11,8 @@ from periodic_tasks.exit.contracts import keeper_contract, multicall_contract
 from . import settings
 from .clients import execution_client, graph_client
 from .contracts import RewardSplitterContract
-from .graph import graph_get_reward_splitters
+from .graph import graph_get_claimable_exit_requests, graph_get_reward_splitters
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -36,6 +35,7 @@ async def process_reward_splitter() -> None:
         address=ZERO_CHECKSUM_ADDRESS,
         client=execution_client,
     )
+    reward_splitter_encoder = reward_splitter_contract.encoder()
 
     vaults = [rs.vault for rs in reward_splitters]
     vault_to_can_harvest_map = await get_vault_to_can_harvest_map(vaults=vaults)
@@ -44,30 +44,62 @@ async def process_reward_splitter() -> None:
         graph_client=graph_client, vaults=vaults
     )
 
-    calls = []
+    splitter_to_exit_requests = await graph_get_claimable_exit_requests(
+        block_number=block['number'], reward_splitters=[rs.address for rs in reward_splitters]
+    )
+
+    # Multicall contract calls
+    calls: list[tuple[ChecksumAddress, HexStr]] = []
+
     for reward_splitter in reward_splitters:
+        logger.info(
+            'Processing reward splitter %s for vault %s',
+            reward_splitter.address,
+            reward_splitter.vault,
+        )
+
         vault = reward_splitter.vault
         harvest_params = vault_to_harvest_params_map.get(vault)
+
         can_harvest = vault_to_can_harvest_map[vault]
+        logger.info('can_harvest %s, ', can_harvest)
+
+        reward_splitter_calls: list[HexStr] = []
+
         if can_harvest and harvest_params:
-            calls.append(
-                (
-                    reward_splitter.address,
-                    reward_splitter_contract.get_update_vault_state_call(
-                        harvest_params=harvest_params
-                    ),
-                )
+            reward_splitter_calls.append(
+                reward_splitter_encoder.update_vault_state(harvest_params=harvest_params)
             )
+
         for shareholder in reward_splitter.shareholders:
-            calls.append(
-                (
-                    reward_splitter.address,
-                    reward_splitter_contract.get_enter_exit_queue_on_behalf_call(
-                        rewards=None,  # exiting all rewards
-                        address=shareholder.address,
-                    ),
+            logger.info('Processing shareholder %s', shareholder.address)
+            reward_splitter_calls.append(
+                reward_splitter_encoder.enter_exit_queue_on_behalf(
+                    rewards=None,  # exiting all rewards
+                    address=shareholder.address,
                 )
             )
+
+        exit_requests = splitter_to_exit_requests.get(reward_splitter.address, [])  # nosec
+        for exit_request in exit_requests:
+            logger.info(
+                'Processing exit request with position ticket %s', exit_request.position_ticket
+            )
+            if exit_request.exit_queue_index is None:
+                logger.info(
+                    'Exit request with position ticket %s has no exit queue index',
+                    exit_request.position_ticket,
+                )
+                continue
+            reward_splitter_calls.append(
+                reward_splitter_encoder.claim_exited_assets_on_behalf(
+                    position_ticket=exit_request.position_ticket,
+                    timestamp=exit_request.timestamp,
+                    exit_queue_index=exit_request.exit_queue_index,
+                ),
+            )
+
+        calls.extend([(reward_splitter.address, call) for call in reward_splitter_calls])
 
     if settings.DRY_RUN:
         tx = await multicall_contract.functions.aggregate(calls).call()
