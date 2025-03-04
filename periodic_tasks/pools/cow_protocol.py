@@ -4,6 +4,7 @@ import time
 import requests
 from eth_account.messages import encode_typed_data
 from eth_account.signers.local import LocalAccount
+from sw_utils.common import urljoin
 from web3 import Web3
 from web3.types import ChecksumAddress, Wei
 
@@ -100,19 +101,18 @@ class CowProtocolWrapper:
             'sellAmountBeforeFee': str(sell_amount),
         }
         response = requests.post(
-            f'{network_config.COWSWAP_API_URL}/api/v1/quote',
+            urljoin(network_config.COWSWAP_API_URL, '/api/v1/quote'),
             json=payload,
             timeout=COWSWAP_REQUEST_TIMEOUT,
         )
         if response.status_code == 200:
-            logger.info('Quoite submitted successfully!')
             data = response.json()
 
             if not data.get('verified'):
-                logger.error('!')
+                logger.error('Failed to verify cowswap order')
                 return None
             return data
-        logger.error('Failed to quote order.: %s', response.text)
+        logger.error('Failed to quote cowswap order: %s', response.text)
         return None
 
     def _submit_order(
@@ -144,20 +144,19 @@ class CowProtocolWrapper:
         signature = Web3.to_hex(signature)
         order_payload['signature'] = signature
         response = requests.post(
-            f'{network_config.COWSWAP_API_URL}/api/v1/orders',
+            urljoin(network_config.COWSWAP_API_URL, '/api/v1/orders'),
             json=order_payload,
             timeout=COWSWAP_REQUEST_TIMEOUT,
         )
         if response.status_code == 201:
-            logger.info('Order submitted successfully!')
             return response.json()
 
-        logger.error('Failed to submit order.: %s', response.text)
+        logger.error('Failed to submit cowswap order: %s', response.text)
         return None
 
     def _check_order(self, order_uid: str) -> Wei | None:
         response = requests.get(
-            f'{network_config.COWSWAP_API_URL}/api/v1/orders/{order_uid}',
+            urljoin(network_config.COWSWAP_API_URL, '/api/v1/orders', order_uid),
             timeout=COWSWAP_REQUEST_TIMEOUT,
         )
         response.raise_for_status()

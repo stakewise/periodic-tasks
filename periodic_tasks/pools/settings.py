@@ -7,7 +7,6 @@ from periodic_tasks.common.clients import get_hot_wallet_account
 
 ETH_TICKER = 'ETH'
 WETH_TICKER = 'WETH'
-DAI_TICKER = 'DAI'
 GNO_TICKER = 'GNO'
 BTC_TICKER = 'BTC'
 SOL_TICKER = 'SOL'
@@ -59,7 +58,6 @@ TICKER_TO_SETTINGS: dict[str, tuple[LocalAccount | None, str]] = {
 
 TOKEN_ADDRESSES = {
     MAINNET: {
-        ETH_TICKER: Web3.to_checksum_address('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
         WETH_TICKER: Web3.to_checksum_address('0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'),
         BTC_TICKER: Web3.to_checksum_address('0x2260fac5e5542a773aa44fbcfedf7c193bc2c599'),
         SOL_TICKER: Web3.to_checksum_address('0xD31a59c85aE9D8edEFeC411D448f90841571b89c'),
@@ -68,7 +66,6 @@ TOKEN_ADDRESSES = {
         SWISE_TICKER: Web3.to_checksum_address('0x48c3399719b582dd63eb5aadf12a40b4c3f52fa2'),
     },
     GNOSIS: {
-        DAI_TICKER: Web3.to_checksum_address('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'),
         GNO_TICKER: Web3.to_checksum_address('0x9C58BAcC331c9aa871AFD802DB6379a98e80CEdb'),
         ETH_TICKER: Web3.to_checksum_address('0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1'),
         BTC_TICKER: Web3.to_checksum_address('0x8e5bbbb09ed1ebde8674cda39a0c169401db4252'),
@@ -92,3 +89,5 @@ COWSWAP_REQUEST_TIMEOUT: int = config('COWSWAP_REQUEST_TIMEOUT', default='60', c
 COWSWAP_ORDER_PROCESSING_TIMEOUT: int = config(
     'COWSWAP_ORDER_PROCESSING_TIMEOUT', default='60', cast=int
 )
+
+SUPPORTED_NETWORKS = [MAINNET, GNOSIS]
