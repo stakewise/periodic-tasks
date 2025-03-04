@@ -1,22 +1,28 @@
 import logging
+from typing import cast
 
 from eth_typing import ChecksumAddress, HexStr
+from hexbytes import HexBytes
 from web3 import Web3
 
 from periodic_tasks.common.graph import get_multiple_harvest_params
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
+from periodic_tasks.common.typings import HarvestParams
+from periodic_tasks.common.utils import to_chunks
 from periodic_tasks.exit.contracts import keeper_contract, multicall_contract
+from periodic_tasks.exit.typings import ExitRequest
+from periodic_tasks.reward_splitter.typings import RewardSplitter
 
 from . import settings
 from .clients import execution_client, graph_client
-from .contracts import RewardSplitterContract
+from .contracts import RewardSplitterContract, RewardSplitterEncoder
 from .graph import graph_get_claimable_exit_requests, graph_get_reward_splitters
 
 logger = logging.getLogger(__name__)
 
 
-async def process_reward_splitter() -> None:
+async def process_reward_splitters() -> None:
     vaults = [Web3.to_checksum_address(v) for v in settings.VAULTS]
     block = await execution_client.eth.get_block('finalized')
 
@@ -27,9 +33,9 @@ async def process_reward_splitter() -> None:
         logger.info('No reward splitters found for given vaults')
         return
 
-    # Reward splitter contract is used to encode abi calls
-    # Actual calls are made by multicall contract
-    # It's okay to put zero address here, because we don't need to interact with the contract
+    # Reward splitter contract is used to encode abi calls.
+    # Not for sending transactions.
+    # It's okay to put zero address here.
     reward_splitter_contract = RewardSplitterContract(
         abi_path='abi/IRewardSplitter.json',
         address=ZERO_CHECKSUM_ADDRESS,
@@ -38,7 +44,7 @@ async def process_reward_splitter() -> None:
     reward_splitter_encoder = reward_splitter_contract.encoder()
 
     vaults = [rs.vault for rs in reward_splitters]
-    vault_to_can_harvest_map = await get_vault_to_can_harvest_map(vaults=vaults)
+    vault_to_can_harvest_map = await _get_vault_to_can_harvest_map(vaults=vaults)
 
     vault_to_harvest_params_map = await get_multiple_harvest_params(
         graph_client=graph_client, vaults=vaults
@@ -57,69 +63,100 @@ async def process_reward_splitter() -> None:
             reward_splitter.address,
             reward_splitter.vault,
         )
-
         vault = reward_splitter.vault
-        harvest_params = vault_to_harvest_params_map.get(vault)
-
         can_harvest = vault_to_can_harvest_map[vault]
-        logger.info('can_harvest %s, ', can_harvest)
-
-        reward_splitter_calls: list[HexStr] = []
-
-        if can_harvest and harvest_params:
-            reward_splitter_calls.append(
-                reward_splitter_encoder.update_vault_state(harvest_params=harvest_params)
-            )
-
-        for shareholder in reward_splitter.shareholders:
-            logger.info('Processing shareholder %s', shareholder.address)
-            reward_splitter_calls.append(
-                reward_splitter_encoder.enter_exit_queue_on_behalf(
-                    rewards=None,  # exiting all rewards
-                    address=shareholder.address,
-                )
-            )
-
+        harvest_params = vault_to_harvest_params_map.get(vault)
         exit_requests = splitter_to_exit_requests.get(reward_splitter.address, [])  # nosec
-        for exit_request in exit_requests:
-            logger.info(
-                'Processing exit request with position ticket %s', exit_request.position_ticket
-            )
-            if exit_request.exit_queue_index is None:
-                logger.info(
-                    'Exit request with position ticket %s has no exit queue index',
-                    exit_request.position_ticket,
-                )
-                continue
-            reward_splitter_calls.append(
-                reward_splitter_encoder.claim_exited_assets_on_behalf(
-                    position_ticket=exit_request.position_ticket,
-                    timestamp=exit_request.timestamp,
-                    exit_queue_index=exit_request.exit_queue_index,
-                ),
-            )
 
-        calls.extend([(reward_splitter.address, call) for call in reward_splitter_calls])
-
-    if settings.DRY_RUN:
-        tx = await multicall_contract.functions.aggregate(calls).call()
-        return
-
-    tx = await multicall_contract.functions.aggregate(calls).transact()
-
-    tx_hash = Web3.to_hex(tx)
-    logger.info('Waiting for transaction %s confirmation', tx_hash)
-    tx_receipt = await execution_client.eth.wait_for_transaction_receipt(
-        tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
-    )
-    if not tx_receipt['status']:
-        logger.error(
-            'Failed to confirm reward splitter tx: %s',
-            tx_hash,
+        reward_splitter_calls = await _get_reward_splitter_calls(
+            reward_splitter=reward_splitter,
+            reward_splitter_encoder=reward_splitter_encoder,
+            can_harvest=can_harvest,
+            harvest_params=harvest_params,
+            exit_requests=exit_requests,
         )
 
+        # Add up to multicall format calls
+        calls.extend([(reward_splitter.address, call) for call in reward_splitter_calls])
 
-async def get_vault_to_can_harvest_map(
+    if not calls:
+        logger.warning('No calls to process')
+        return
+
+    for calls_batch in to_chunks(calls, settings.MULTICALL_BATCH_SIZE):
+        logger.info('Processing multicall batch')
+        tx = await _multicall(calls_batch)
+
+        if settings.DRY_RUN:
+            continue
+
+        tx = cast(HexBytes, tx)
+        tx_hash = Web3.to_hex(tx)
+        logger.info('Waiting for transaction %s confirmation', tx_hash)
+
+        tx_receipt = await execution_client.eth.wait_for_transaction_receipt(
+            tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
+        )
+        if not tx_receipt['status']:
+            logger.error(
+                'Failed to confirm reward splitter tx: %s',
+                tx_hash,
+            )
+            break
+
+
+async def _get_reward_splitter_calls(
+    reward_splitter: RewardSplitter,
+    reward_splitter_encoder: RewardSplitterEncoder,
+    can_harvest: bool,
+    harvest_params: HarvestParams | None,
+    exit_requests: list[ExitRequest],
+) -> list[HexStr]:
+    # ABI encoded calls for reward splitter without contract address
+    reward_splitter_calls: list[HexStr] = []
+
+    # Append update state call
+    logger.info('can_harvest %s, ', can_harvest)
+
+    if can_harvest and harvest_params:
+        reward_splitter_calls.append(
+            reward_splitter_encoder.update_vault_state(harvest_params=harvest_params)
+        )
+
+    # Append enter exit queue on behalf calls
+    for shareholder in reward_splitter.shareholders:
+        logger.info('Processing shareholder %s', shareholder.address)
+        reward_splitter_calls.append(
+            reward_splitter_encoder.enter_exit_queue_on_behalf(
+                rewards=None,  # exiting all rewards
+                address=shareholder.address,
+            )
+        )
+
+    # Append claim exited assets on behalf calls
+    if exit_requests:
+        logger.info('no exit requests for reward splitter %s', reward_splitter.address)
+
+    for exit_request in exit_requests:
+        logger.info('Processing exit request with position ticket %s', exit_request.position_ticket)
+        if exit_request.exit_queue_index is None:
+            logger.info(
+                'Exit request with position ticket %s has no exit queue index',
+                exit_request.position_ticket,
+            )
+            continue
+        reward_splitter_calls.append(
+            reward_splitter_encoder.claim_exited_assets_on_behalf(
+                position_ticket=exit_request.position_ticket,
+                timestamp=exit_request.timestamp,
+                exit_queue_index=exit_request.exit_queue_index,
+            ),
+        )
+
+    return reward_splitter_calls
+
+
+async def _get_vault_to_can_harvest_map(
     vaults: list[ChecksumAddress],
 ) -> dict[ChecksumAddress, bool]:
     vault_to_can_harvest_map: dict[ChecksumAddress, bool] = {}
@@ -127,3 +164,38 @@ async def get_vault_to_can_harvest_map(
         can_harvest = await keeper_contract.can_harvest(vault)
         vault_to_can_harvest_map[vault] = can_harvest
     return vault_to_can_harvest_map
+
+
+async def _multicall(calls: list[tuple[ChecksumAddress, HexStr]]) -> HexBytes | None:
+    """
+    Helper function to execute multicall:
+    - Calls the original contract if all calls are to the same address.
+    - Calls multicall contract otherwise.
+    - Simulates the transaction if DRY_RUN is enabled.
+    - Sends the transaction otherwise.
+    """
+    if not calls:
+        return None
+
+    distinct_addresses = list(set(address for address, _ in calls))
+    if len(distinct_addresses) == 1:
+        # Call the original contract when possible
+        # as it makes it easier to find the transaction in the block explorer on the contract page
+        contract = RewardSplitterContract(
+            abi_path='abi/IRewardSplitter.json',
+            address=distinct_addresses[0],
+            client=execution_client,
+        )
+        contract_func = contract.functions.multicall([call for _, call in calls])
+    else:
+        # Call multicall contract
+        contract_func = multicall_contract.functions.aggregate(calls)
+
+    # Simulate transaction if DRY_RUN is enabled
+    if settings.DRY_RUN:
+        await contract_func.call()
+        return None
+
+    # Send transaction
+    tx = await contract_func.transact()
+    return tx
