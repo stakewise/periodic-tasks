@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 async def main() -> None:
     if NETWORK not in SUPPORTED_NETWORKS:
-        raise ValueError(f'Update LTV in network {NETWORK} is not supported')
+        raise ValueError(f'Infinity pools assets swap in network {NETWORK} is not supported')
 
     await handle_pools()
 
