@@ -108,17 +108,16 @@ def _build_pool_settings() -> list[PoolSettings]:
         if not wallet:
             continue
         if not vault_address:
-            logger.warning('')
+            logger.warning('Missed vault environment variable for ticker %s', ticker)
             continue
         vault_address = Web3.to_checksum_address(vault_address)
-        if all(TICKER_TO_SETTINGS.get(ticker, [])):
-            pool_settings.append(
-                PoolSettings(
-                    ticker=ticker,
-                    wallet=wallet,
-                    vault_address=vault_address,
-                )
+        pool_settings.append(
+            PoolSettings(
+                ticker=ticker,
+                wallet=wallet,
+                vault_address=vault_address,
             )
+        )
 
     return pool_settings
 
