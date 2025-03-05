@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import time
+from datetime import datetime, timezone
 
 import requests
 from eth_account.messages import encode_typed_data
@@ -51,16 +52,25 @@ class CowProtocolWrapper:
         if not order_uid:
             return None
 
+        await asyncio.sleep(3)  # wait for order processing
         start_time = time.time()
         while True:
-            converted_amount = self._check_order(order_uid)
-            if converted_amount:
-                return converted_amount
-
-            if time.time() > start_time + COWSWAP_ORDER_PROCESSING_TIMEOUT:
-                logging.error('Failed to process cowswap order %s', order_uid)
+            order_data = self._check_order(order_uid)
+            if order_data:
+                if order_data['status'] == 'fulfilled':
+                    return Wei(int(order_data['executedBuyAmount']))
+                if order_data['status'] in ['cancelled', 'expired']:
+                    logging.error('Failed to fetch cowswap order %s', order_uid)
+                    return None
+                if order_data['validTo'] < int(datetime.now(timezone.utc).timestamp()):
+                    logging.error(
+                        'Failed to fill cowswap order %s within the processing time', order_uid
+                    )
+                    return None
+            elif time.time() > start_time + COWSWAP_ORDER_PROCESSING_TIMEOUT:
+                logging.error('Failed to fetch cowswap order %s', order_uid)
                 return None
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(1)
 
     async def _approve_sell_token(
         self,
@@ -155,19 +165,13 @@ class CowProtocolWrapper:
         logger.error('Failed to submit cowswap order: %s', response.text)
         return None
 
-    def _check_order(self, order_uid: str) -> Wei | None:
+    def _check_order(self, order_uid: str) -> dict | None:
         response = requests.get(
             urljoin(network_config.COWSWAP_API_URL, '/api/v1/orders', order_uid),
             timeout=COWSWAP_REQUEST_TIMEOUT,
         )
-        if response.status_code == 403:  # order has not processed yet
-            return None
-
         response.raise_for_status()
-        data = response.json()
-        if data['status'] == 'fulfilled':
-            return Wei(int(data['executedBuyAmount']))
-        return None
+        return response.json()
 
     @staticmethod
     def _get_signing_message(order_payload: dict) -> dict:
