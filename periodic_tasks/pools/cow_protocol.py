@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import time
 
@@ -46,7 +47,7 @@ class CowProtocolWrapper:
             wallet=wallet,
             quote=quote,
         )
-        logger.info(order_uid)
+        logger.info('Created CowSwap order %s', order_uid)
         if not order_uid:
             return None
 
@@ -59,7 +60,7 @@ class CowProtocolWrapper:
             if time.time() > start_time + COWSWAP_ORDER_PROCESSING_TIMEOUT:
                 logging.error('Failed to process cowswap order %s', order_uid)
                 return None
-            time.sleep(0.5)
+            await asyncio.sleep(0.5)
 
     async def _approve_sell_token(
         self,
@@ -159,6 +160,9 @@ class CowProtocolWrapper:
             urljoin(network_config.COWSWAP_API_URL, '/api/v1/orders', order_uid),
             timeout=COWSWAP_REQUEST_TIMEOUT,
         )
+        if response.status_code == 403:  # order has not processed yet
+            return None
+
         response.raise_for_status()
         data = response.json()
         if data['status'] == 'fulfilled':

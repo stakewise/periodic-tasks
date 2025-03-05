@@ -44,10 +44,11 @@ async def handle_pools() -> None:
     for pool in pool_settings:
         base_to_swap = await get_base_token_balance(pool.wallet.address)  # eth or gno amount
         logger.info(
-            'Processing %s %s for vault %s...',
+            'Processing %s %s for vault %s. Wallet address: %s ...',
             Web3.from_wei(base_to_swap, 'ether'),
             NETWORK_BASE_TICKERS[NETWORK],
             pool.vault_address,
+            pool.wallet.address,
         )
 
         if base_to_swap < network_config.MIN_POOL_SWAP_AMOUNT:
@@ -58,18 +59,27 @@ async def handle_pools() -> None:
         if NETWORK == MAINNET:
             base_to_swap = await _convert_to_weth(wallet=pool.wallet, amount=base_to_swap)
 
-        swapped_amount = CowProtocolWrapper().swap(
+        swapped_amount = await CowProtocolWrapper().swap(
             wallet=pool.wallet,
             sell_token=pool.swap_from_token,
             buy_token=pool.swap_to_token,
             sell_amount=base_to_swap,
         )
-        if not swapped_amount:
+        if swapped_amount:
+            logger.info(
+                'Swapped %s %s via CowSwap for vault %s...',
+                Web3.from_wei(swapped_amount, 'ether'),
+                pool.ticker,
+                pool.vault_address,
+            )
+
+        else:
             logger.info('Can\'t swap tokens via CowSwap, skipping vault %s...', pool.vault_address)
             continue
 
         if pool.ticker == USDS_TICKER:
             await _convert_to_susds(pool.wallet)
+            logger.info('Successfully converted usds to susds for vault %s...', pool.vault_address)
 
         distributed_token_contract = get_erc20_contract(
             address=pool.distributed_token,
