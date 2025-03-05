@@ -4,6 +4,7 @@ from typing import cast
 from eth_typing import ChecksumAddress, HexStr
 from hexbytes import HexBytes
 from web3 import Web3
+from web3.types import Wei
 
 from periodic_tasks.common.graph import get_multiple_harvest_params
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
@@ -16,7 +17,7 @@ from periodic_tasks.reward_splitter.typings import RewardSplitter
 
 from . import settings
 from .clients import execution_client, graph_client
-from .contracts import RewardSplitterContract, RewardSplitterEncoder
+from .contracts import RewardSplitterContract, RewardSplitterEncoder, VaultStateContract
 from .graph import graph_get_claimable_exit_requests, graph_get_reward_splitters
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,14 @@ async def process_reward_splitters() -> None:
             reward_splitter.vault,
         )
         vault = reward_splitter.vault
+
+        reward_splitter_assets = await _get_reward_splitter_assets(reward_splitter)
+        logger.info('Reward splitter assets: %s', reward_splitter_assets)
+
+        if reward_splitter_assets < settings.REWARD_SPLITTER_MIN_ASSETS:
+            logger.info('Reward splitter %s has not enough assets', reward_splitter.address)
+            continue
+
         can_harvest = vault_to_can_harvest_map[vault]
         harvest_params = vault_to_harvest_params_map.get(vault)
         exit_requests = splitter_to_exit_requests.get(reward_splitter.address, [])  # nosec
@@ -87,11 +96,12 @@ async def process_reward_splitters() -> None:
             tx, timeout=EXECUTION_TRANSACTION_TIMEOUT
         )
         if not tx_receipt['status']:
-            logger.error(
-                'Failed to confirm reward splitter tx: %s',
-                tx_hash,
+            raise RuntimeError(
+                f'Failed to confirm reward splitter tx: {tx_hash}',
             )
-            break
+        logger.info('Transaction %s confirmed', tx_hash)
+
+    logger.info('All multicall batches processed')
 
 
 async def _get_reward_splitter_calls(
@@ -143,6 +153,17 @@ async def _get_reward_splitter_calls(
         )
 
     return reward_splitter_calls
+
+
+async def _get_reward_splitter_assets(reward_splitter: RewardSplitter) -> Wei:
+    vault_state_contract = VaultStateContract(
+        abi_path='abi/IVaultState.json',
+        address=reward_splitter.vault,
+        client=execution_client,
+    )
+    shares = await vault_state_contract.functions.getShares(reward_splitter.address).call()
+    assets = await vault_state_contract.functions.convertToAssets(shares).call()
+    return Wei(assets)
 
 
 async def _get_vault_to_can_harvest_map(
