@@ -20,7 +20,7 @@ async def graph_get_reward_splitters(
                 block: {number: $block},
                 where: {
                     vault_in: $vaults,
-                    version: 3,
+                    version_gte: 3,
                     isClaimOnBehalfEnabled: true
                 }
             ) {

@@ -33,16 +33,6 @@ async def process_reward_splitters() -> None:
         logger.info('No reward splitters found for given vaults')
         return
 
-    # Reward splitter contract is used to encode abi calls.
-    # Not for sending transactions.
-    # It's okay to put zero address here.
-    reward_splitter_contract = RewardSplitterContract(
-        abi_path='abi/IRewardSplitter.json',
-        address=ZERO_CHECKSUM_ADDRESS,
-        client=execution_client,
-    )
-    reward_splitter_encoder = reward_splitter_contract.encoder()
-
     vaults = [rs.vault for rs in reward_splitters]
     vault_to_can_harvest_map = await _get_vault_to_can_harvest_map(vaults=vaults)
 
@@ -70,7 +60,6 @@ async def process_reward_splitters() -> None:
 
         reward_splitter_calls = await _get_reward_splitter_calls(
             reward_splitter=reward_splitter,
-            reward_splitter_encoder=reward_splitter_encoder,
             can_harvest=can_harvest,
             harvest_params=harvest_params,
             exit_requests=exit_requests,
@@ -107,13 +96,13 @@ async def process_reward_splitters() -> None:
 
 async def _get_reward_splitter_calls(
     reward_splitter: RewardSplitter,
-    reward_splitter_encoder: RewardSplitterEncoder,
     can_harvest: bool,
     harvest_params: HarvestParams | None,
     exit_requests: list[ExitRequest],
 ) -> list[HexStr]:
     # ABI encoded calls for reward splitter without contract address
     reward_splitter_calls: list[HexStr] = []
+    reward_splitter_encoder = _get_reward_splitter_encoder()
 
     # Append update state call
     logger.info('can_harvest %s, ', can_harvest)
@@ -135,7 +124,7 @@ async def _get_reward_splitter_calls(
 
     # Append claim exited assets on behalf calls
     if exit_requests:
-        logger.info('no exit requests for reward splitter %s', reward_splitter.address)
+        logger.info('No exit requests for reward splitter %s', reward_splitter.address)
 
     for exit_request in exit_requests:
         logger.info('Processing exit request with position ticket %s', exit_request.position_ticket)
@@ -194,8 +183,21 @@ async def _multicall(calls: list[tuple[ChecksumAddress, HexStr]]) -> HexBytes | 
     # Simulate transaction if DRY_RUN is enabled
     if settings.DRY_RUN:
         await contract_func.call()
+        logger.info('Simulated multicall transaction')
         return None
 
     # Send transaction
     tx = await contract_func.transact()
     return tx
+
+
+def _get_reward_splitter_encoder() -> RewardSplitterEncoder:
+    # Reward splitter contract is used to encode abi calls.
+    # Not for sending transactions.
+    # It's okay to put zero address here.
+    reward_splitter_contract = RewardSplitterContract(
+        abi_path='abi/IRewardSplitter.json',
+        address=ZERO_CHECKSUM_ADDRESS,
+        client=execution_client,
+    )
+    return reward_splitter_contract.encoder()
