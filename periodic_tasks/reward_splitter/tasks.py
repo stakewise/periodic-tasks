@@ -6,18 +6,18 @@ from hexbytes import HexBytes
 from web3 import Web3
 from web3.types import Wei
 
-from periodic_tasks.common.graph import get_multiple_harvest_params
+from periodic_tasks.common.graph import get_graph_vaults
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
 from periodic_tasks.common.typings import HarvestParams
 from periodic_tasks.common.utils import to_chunks
-from periodic_tasks.exit.contracts import keeper_contract, multicall_contract
+from periodic_tasks.exit.contracts import multicall_contract
 from periodic_tasks.exit.typings import ExitRequest
 from periodic_tasks.reward_splitter.typings import RewardSplitter
 
 from . import settings
 from .clients import execution_client, graph_client
-from .contracts import RewardSplitterContract, RewardSplitterEncoder, VaultStateContract
+from .contracts import RewardSplitterContract, RewardSplitterEncoder
 from .graph import graph_get_claimable_exit_requests, graph_get_reward_splitters
 
 logger = logging.getLogger(__name__)
@@ -35,14 +35,11 @@ async def process_reward_splitters() -> None:
         return
 
     vaults = [rs.vault for rs in reward_splitters]
-    vault_to_can_harvest_map = await _get_vault_to_can_harvest_map(vaults=vaults)
 
-    vault_to_harvest_params_map = await get_multiple_harvest_params(
-        graph_client=graph_client, vaults=vaults
-    )
+    graph_vaults_map = await get_graph_vaults(graph_client=graph_client, vaults=vaults)
 
     splitter_to_exit_requests = await graph_get_claimable_exit_requests(
-        block_number=block['number'], reward_splitters=[rs.address for rs in reward_splitters]
+        block_number=block['number'], receivers=[rs.address for rs in reward_splitters]
     )
 
     # Multicall contract calls
@@ -56,15 +53,9 @@ async def process_reward_splitters() -> None:
         )
         vault = reward_splitter.vault
 
-        reward_splitter_assets = await _get_reward_splitter_assets(reward_splitter)
-        logger.info('Reward splitter assets: %s', reward_splitter_assets)
-
-        if reward_splitter_assets < settings.REWARD_SPLITTER_MIN_ASSETS:
-            logger.info('Reward splitter %s has not enough assets', reward_splitter.address)
-            continue
-
-        can_harvest = vault_to_can_harvest_map[vault]
-        harvest_params = vault_to_harvest_params_map.get(vault)
+        graph_vault = graph_vaults_map[vault]
+        can_harvest = graph_vault.can_harvest
+        harvest_params = graph_vault.harvest_params
         exit_requests = splitter_to_exit_requests.get(reward_splitter.address, [])  # nosec
 
         reward_splitter_calls = await _get_reward_splitter_calls(
@@ -114,26 +105,32 @@ async def _get_reward_splitter_calls(
     reward_splitter_calls: list[HexStr] = []
     reward_splitter_encoder = _get_reward_splitter_encoder()
 
-    # Append update state call
-    logger.info('can_harvest %s, ', can_harvest)
+    reward_splitter_assets = await _get_reward_splitter_assets(reward_splitter)
 
-    if can_harvest and harvest_params:
-        reward_splitter_calls.append(
-            reward_splitter_encoder.update_vault_state(harvest_params=harvest_params)
-        )
+    if reward_splitter_assets < settings.REWARD_SPLITTER_MIN_ASSETS:
+        logger.info('Reward splitter %s has not enough assets to withdraw', reward_splitter.address)
+    else:
+        # Append update state call
+        logger.info('can_harvest %s, ', can_harvest)
 
-    # Append enter exit queue on behalf calls
-    for shareholder in reward_splitter.shareholders:
-        logger.info('Processing shareholder %s', shareholder.address)
-        reward_splitter_calls.append(
-            reward_splitter_encoder.enter_exit_queue_on_behalf(
-                rewards=None,  # exiting all rewards
-                address=shareholder.address,
+        if can_harvest and harvest_params:
+            reward_splitter_calls.append(
+                reward_splitter_encoder.update_vault_state(harvest_params=harvest_params)
             )
-        )
+
+        # Append enter exit queue on behalf calls
+        for shareholder in reward_splitter.shareholders:
+            logger.info('Processing shareholder %s', shareholder.address)
+
+            reward_splitter_calls.append(
+                reward_splitter_encoder.enter_exit_queue_on_behalf(
+                    rewards=None,  # exiting all rewards
+                    address=shareholder.address,
+                )
+            )
 
     # Append claim exited assets on behalf calls
-    if exit_requests:
+    if not exit_requests:
         logger.info('No exit requests for reward splitter %s', reward_splitter.address)
 
     for exit_request in exit_requests:
@@ -156,24 +153,7 @@ async def _get_reward_splitter_calls(
 
 
 async def _get_reward_splitter_assets(reward_splitter: RewardSplitter) -> Wei:
-    vault_state_contract = VaultStateContract(
-        abi_path='abi/IVaultState.json',
-        address=reward_splitter.vault,
-        client=execution_client,
-    )
-    shares = await vault_state_contract.functions.getShares(reward_splitter.address).call()
-    assets = await vault_state_contract.functions.convertToAssets(shares).call()
-    return Wei(assets)
-
-
-async def _get_vault_to_can_harvest_map(
-    vaults: list[ChecksumAddress],
-) -> dict[ChecksumAddress, bool]:
-    vault_to_can_harvest_map: dict[ChecksumAddress, bool] = {}
-    for vault in vaults:
-        can_harvest = await keeper_contract.can_harvest(vault)
-        vault_to_can_harvest_map[vault] = can_harvest
-    return vault_to_can_harvest_map
+    return Wei(sum(sh.earned_vault_assets for sh in reward_splitter.shareholders))
 
 
 async def _multicall(calls: list[tuple[ChecksumAddress, HexStr]]) -> HexBytes | None:

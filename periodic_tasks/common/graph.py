@@ -7,7 +7,7 @@ from sw_utils.graph.client import GraphClient
 from web3 import Web3
 from web3.types import Wei
 
-from periodic_tasks.common.typings import HarvestParams
+from periodic_tasks.common.typings import GraphVault, HarvestParams
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,9 +48,12 @@ async def get_harvest_params(
     )
 
 
-async def get_multiple_harvest_params(
+async def get_graph_vaults(
     graph_client: GraphClient, vaults: list[ChecksumAddress]
-) -> dict[ChecksumAddress, HarvestParams]:
+) -> dict[ChecksumAddress, GraphVault]:
+    """
+    Returns dict {vault_address: GraphVault}
+    """
     query = gql(
         """
       query VaultQuery($vaults: [String]) {
@@ -60,6 +63,7 @@ async def get_multiple_harvest_params(
           }
         ) {
           id
+          canHarvest
           proof
           proofReward
           proofUnlockedMevReward
@@ -75,15 +79,23 @@ async def get_multiple_harvest_params(
     response = await graph_client.run_query(query, params)
     vault_data = response['vaults']  # pylint: disable=unsubscriptable-object
 
-    harvest_params_map: dict[ChecksumAddress, HarvestParams] = {}
+    graph_vaults_map: dict[ChecksumAddress, GraphVault] = {}
 
     for vault_item in vault_data:
-        harvest_params = HarvestParams(
-            rewards_root=HexBytes(Web3.to_bytes(hexstr=vault_item['rewardsRoot'])),
-            reward=Wei(int(vault_item['proofReward'])),
-            unlocked_mev_reward=Wei(int(vault_item['proofUnlockedMevReward'])),
-            proof=[HexBytes(Web3.to_bytes(hexstr=p)) for p in vault_item['proof']],
-        )
-        harvest_params_map[Web3.to_checksum_address(vault_item['id'])] = harvest_params
+        vault_address = Web3.to_checksum_address(vault_item['id'])
 
-    return harvest_params_map
+        can_harvest = vault_item['canHarvest']
+        rewards_root = HexBytes(Web3.to_bytes(hexstr=vault_item['rewardsRoot']))
+        proof_reward = Wei(int(vault_item['proofReward']))
+        proof_unlocked_mev_reward = Wei(int(vault_item['proofUnlockedMevReward']))
+        proof = [HexBytes(Web3.to_bytes(hexstr=p)) for p in vault_item['proof']]
+
+        graph_vaults_map[vault_address] = GraphVault(
+            can_harvest=can_harvest,
+            rewards_root=rewards_root,
+            proof_reward=proof_reward,
+            proof_unlocked_mev_reward=proof_unlocked_mev_reward,
+            proof=proof,
+        )
+
+    return graph_vaults_map

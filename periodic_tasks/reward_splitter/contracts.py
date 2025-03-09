@@ -51,7 +51,3 @@ class RewardSplitterEncoder:
             fn_name='claimExitedAssetsOnBehalf',
             args=[position_ticket, timestamp, exit_queue_index],
         )
-
-
-class VaultStateContract(ContractWrapper):
-    pass

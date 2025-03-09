@@ -3,6 +3,7 @@ from collections import defaultdict
 from eth_typing import BlockNumber, ChecksumAddress
 from gql import gql
 from web3 import Web3
+from web3.types import Wei
 
 from periodic_tasks.exit.typings import ExitRequest
 
@@ -28,9 +29,10 @@ async def graph_get_reward_splitters(
                 vault {
                     id
                 }
-                shareHolders(where: {shares_gt: 0}) {
+                shareHolders(where: {earnedVaultAssets_gt: 0}) {
                     address
                     shares
+                    earnedVaultAssets
                 }
             }
         }
@@ -52,6 +54,7 @@ async def graph_get_reward_splitters(
         for shareholder_item in reward_splitter_item['shareHolders']:
             shareholder = RewardSplitterShareHolder(
                 address=Web3.to_checksum_address(shareholder_item['address']),
+                earned_vault_assets=Wei(int(shareholder_item['earnedVaultAssets'])),
             )
             reward_splitter.shareholders.append(shareholder)
         reward_splitters.append(reward_splitter)
@@ -60,19 +63,25 @@ async def graph_get_reward_splitters(
 
 
 async def graph_get_claimable_exit_requests(
-    block_number: BlockNumber, reward_splitters: list[ChecksumAddress]
+    block_number: BlockNumber, receivers: list[ChecksumAddress]
 ) -> dict[ChecksumAddress, list[ExitRequest]]:
+    """
+    Returns dict{receiver: list[ExitRequest]}
+    """
     query = gql(
         '''
-        query Query($block: Int, $first: Int, $skip: Int, $reward_splitters: [String]) {
+        query Query($block: Int, $first: Int, $skip: Int, $receivers: [String]) {
             exitRequests(
                 block: {number: $block},
                 where: {
-                    receiver_in: $reward_splitters,
+                    receiver_in: $receivers,
                     isClaimable: true,
                     isClaimed: false
                 }
             ) {
+                id
+                isClaimable
+                isClaimed
                 positionTicket
                 timestamp
                 exitQueueIndex
@@ -85,7 +94,7 @@ async def graph_get_claimable_exit_requests(
     )
     params = {
         'block': block_number,
-        'reward_splitters': [rs.lower() for rs in reward_splitters],
+        'receivers': [rs.lower() for rs in receivers],
     }
     response = await graph_client.fetch_pages(query, params=params)
 
