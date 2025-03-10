@@ -14,7 +14,11 @@ from periodic_tasks.common.settings import network_config
 
 from .contracts import get_erc20_contract
 from .execution import approve_spending
-from .settings import COWSWAP_ORDER_PROCESSING_TIMEOUT, COWSWAP_REQUEST_TIMEOUT
+from .settings import (
+    COWSWAP_ORDER_PROCESSING_SLEEP,
+    COWSWAP_ORDER_PROCESSING_TIMEOUT,
+    COWSWAP_REQUEST_TIMEOUT,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +74,7 @@ class CowProtocolWrapper:
             elif time.time() > start_time + COWSWAP_ORDER_PROCESSING_TIMEOUT:
                 logging.error('Failed to fetch cowswap order %s', order_uid)
                 return None
-            await asyncio.sleep(1)
+            await asyncio.sleep(COWSWAP_ORDER_PROCESSING_SLEEP)
 
     async def _approve_sell_token(
         self,
@@ -116,6 +120,7 @@ class CowProtocolWrapper:
             json=payload,
             timeout=COWSWAP_REQUEST_TIMEOUT,
         )
+        response.raise_for_status()
         if response.status_code == 200:
             data = response.json()
 
@@ -170,6 +175,8 @@ class CowProtocolWrapper:
             urljoin(network_config.COWSWAP_API_URL, '/api/v1/orders', order_uid),
             timeout=COWSWAP_REQUEST_TIMEOUT,
         )
+        if response.status_code == 403:  # rate limit
+            return None
         response.raise_for_status()
         return response.json()
 
