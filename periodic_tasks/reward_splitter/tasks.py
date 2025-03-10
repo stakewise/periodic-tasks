@@ -111,8 +111,6 @@ async def _get_reward_splitter_calls(
         logger.info('Reward splitter %s has not enough assets to withdraw', reward_splitter.address)
     else:
         # Append update state call
-        logger.info('can_harvest %s, ', can_harvest)
-
         if can_harvest and harvest_params:
             reward_splitter_calls.append(
                 reward_splitter_encoder.update_vault_state(harvest_params=harvest_params)

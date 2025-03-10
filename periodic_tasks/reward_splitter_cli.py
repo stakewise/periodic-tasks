@@ -25,5 +25,4 @@ async def main() -> None:
 if __name__ == '__main__':
     if DRY_RUN:
         logger.info('Dry run mode is enabled')
-    logger.info('Network: %s', NETWORK)
     asyncio.run(main())
