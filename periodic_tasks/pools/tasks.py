@@ -79,7 +79,12 @@ async def handle_pools() -> None:
 
         if pool.ticker == USDS_TICKER:
             await _convert_to_susds(pool.wallet)
-            logger.info('Successfully converted usds to susds for vault %s...', pool.vault_address)
+            logger.info(
+                'Successfully converted %s to %s for vault %s...',
+                USDS_TICKER,
+                SUSDS_TICKER,
+                pool.vault_address,
+            )
 
         distributed_token_contract = get_erc20_contract(
             address=pool.distributed_token,

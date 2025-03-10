@@ -10,8 +10,8 @@ from periodic_tasks.common.settings import network_config
 from .clients import execution_client
 
 
-class TokenDistributorContract(ContractWrapper):
-    abi_path = 'abi/TokenDistributor.json'
+class MerkleDistributorContract(ContractWrapper):
+    abi_path = 'abi/MerkleDistributor.json'
 
     async def distribute_one_time(
         self, vault: ChecksumAddress, token: ChecksumAddress, amount: Wei
@@ -91,7 +91,7 @@ def get_susds_contract(address: ChecksumAddress, client: AsyncWeb3) -> SUSDsCont
     )
 
 
-token_distributor_contract = TokenDistributorContract(
-    address=network_config.TOKEN_DISTRIBUTOR_CONTRACT_ADDRESS,
+merkle_distributor_contract = MerkleDistributorContract(
+    address=network_config.MERKLE_DISTRIBUTOR_CONTRACT_ADDRESS,
     client=execution_client,
 )

@@ -12,7 +12,7 @@ from .contracts import (
     get_erc20_contract,
     get_susds_contract,
     get_wrapped_eth_contract,
-    token_distributor_contract,
+    merkle_distributor_contract,
 )
 from .settings import (
     NETWORK_BASE_TICKER_ADDRESSES,
@@ -37,7 +37,7 @@ async def get_base_token_balance(address: ChecksumAddress) -> Wei:
 async def distribute_tokens(
     token: ChecksumAddress, amount: Wei, vault_address: ChecksumAddress
 ) -> None:
-    tx = await token_distributor_contract.distribute_one_time(
+    tx = await merkle_distributor_contract.distribute_one_time(
         token=token, amount=amount, vault=vault_address
     )
     logger.info('Distribution transaction sent, tx hash: %s', tx.hex())
