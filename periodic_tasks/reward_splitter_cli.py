@@ -3,7 +3,6 @@ import logging
 
 from periodic_tasks.common.clients import hot_wallet_account, setup_execution_client
 from periodic_tasks.common.logs import setup_gql_log_level
-from periodic_tasks.common.settings import NETWORK
 from periodic_tasks.reward_splitter.clients import execution_client
 from periodic_tasks.reward_splitter.settings import DRY_RUN
 from periodic_tasks.reward_splitter.tasks import process_reward_splitters

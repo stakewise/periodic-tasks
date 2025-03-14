@@ -7,7 +7,7 @@ from sw_utils.graph.client import GraphClient
 from web3 import Web3
 from web3.types import Wei
 
-from periodic_tasks.common.typings import GraphVault, HarvestParams
+from periodic_tasks.common.typings import HarvestParams, Vault
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ async def get_harvest_params(
 
 async def get_graph_vaults(
     graph_client: GraphClient, vaults: list[ChecksumAddress]
-) -> dict[ChecksumAddress, GraphVault]:
+) -> dict[ChecksumAddress, Vault]:
     """
     Returns dict {vault_address: GraphVault}
     """
@@ -79,7 +79,7 @@ async def get_graph_vaults(
     response = await graph_client.run_query(query, params)
     vault_data = response['vaults']  # pylint: disable=unsubscriptable-object
 
-    graph_vaults_map: dict[ChecksumAddress, GraphVault] = {}
+    graph_vaults_map: dict[ChecksumAddress, Vault] = {}
 
     for vault_item in vault_data:
         vault_address = Web3.to_checksum_address(vault_item['id'])
@@ -90,7 +90,8 @@ async def get_graph_vaults(
         proof_unlocked_mev_reward = Wei(int(vault_item['proofUnlockedMevReward']))
         proof = [HexBytes(Web3.to_bytes(hexstr=p)) for p in vault_item['proof']]
 
-        graph_vaults_map[vault_address] = GraphVault(
+        graph_vaults_map[vault_address] = Vault(
+            address=vault_address,
             can_harvest=can_harvest,
             rewards_root=rewards_root,
             proof_reward=proof_reward,

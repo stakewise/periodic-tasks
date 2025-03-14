@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
 from web3.types import Wei
 
@@ -13,7 +14,8 @@ class HarvestParams:
 
 
 @dataclass
-class GraphVault:
+class Vault:
+    address: ChecksumAddress
     can_harvest: bool
     rewards_root: HexBytes
     proof_reward: Wei
