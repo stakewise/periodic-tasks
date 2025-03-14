@@ -24,6 +24,20 @@ logger = logging.getLogger(__name__)
 
 
 async def process_reward_splitters() -> None:
+    """
+    Processes reward splitters for the vaults specified in settings.
+
+    This function performs the following steps:
+    1. Fetches the list of vaults from Subgraph.
+    2. Retrieves reward splitters associated with the vaults from Subgraph.
+    3. Maps the vaults to their harvest params.
+    4. Retrieves claimable exit requests for the reward splitters.
+    5. Generates multicall contract calls for each reward splitter.
+    6. Processes the multicall batches and waits for transaction confirmations.
+
+    Raises:
+        RuntimeError: If a transaction fails to confirm.
+    """
     vaults = [Web3.to_checksum_address(v) for v in settings.VAULTS]
     block = await execution_client.eth.get_block('finalized')
 
@@ -101,7 +115,18 @@ async def _get_reward_splitter_calls(
     harvest_params: HarvestParams | None,
     exit_requests: list[ExitRequest],
 ) -> list[HexStr]:
-    # ABI encoded calls for reward splitter without contract address
+    """
+    Generate ABI encoded calls for the reward splitter contract.
+
+    It includes calls:
+    1. for updating the vault state,
+    2. entering the exit queue on behalf of shareholders,
+    3. claiming exited assets on behalf of shareholders.
+
+    Returns:
+        list[HexStr]: A list of ABI encoded calls for the reward splitter contract.
+    """
+    # ABI encoded calls without contract address
     reward_splitter_calls: list[HexStr] = []
     reward_splitter_encoder = _get_reward_splitter_encoder()
 
