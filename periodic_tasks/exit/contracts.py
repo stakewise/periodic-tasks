@@ -43,7 +43,9 @@ class StrategiesRegistryContract(ContractWrapper):
 class KeeperContract(ContractWrapper):
     abi_path = 'abi/IKeeper.json'
 
-    async def can_harvest(self, vault: ChecksumAddress, block_number: BlockNumber) -> bool:
+    async def can_harvest(
+        self, vault: ChecksumAddress, block_number: BlockNumber | None = None
+    ) -> bool:
         return await self.contract.functions.canHarvest(vault).call(block_identifier=block_number)
 
 
