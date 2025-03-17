@@ -51,7 +51,7 @@ async def handle_pools() -> None:
             pool.wallet.address,
         )
 
-        if base_to_swap < network_config.MIN_POOL_SWAP_AMOUNT:
+        if NETWORK == MAINNET and base_to_swap < network_config.MIN_POOL_SWAP_AMOUNT:
             logger.info('Distributed amount too small, skipping vault %s...', pool.vault_address)
             continue
 
@@ -129,7 +129,11 @@ def _build_pool_settings() -> list[PoolSettings]:
 
 async def _convert_to_weth(wallet: LocalAccount, amount: Wei) -> Wei:
     """Convert ETH to WETH"""
-    converted_amount = Wei(amount - MIN_ETH_FOR_GAS_AMOUNT)
+    if NETWORK == MAINNET:
+        converted_amount = Wei(amount - MIN_ETH_FOR_GAS_AMOUNT)
+    else:
+        converted_amount = amount
+
     await wrap_ether(
         wallet=wallet,
         amount=converted_amount,
