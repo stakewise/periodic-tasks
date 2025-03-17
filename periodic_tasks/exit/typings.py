@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from web3 import Web3
 from web3.types import ChecksumAddress, Wei
 
 
@@ -10,6 +11,7 @@ class ExitRequest:
     timestamp: int
     exit_queue_index: int | None
     is_claimable: bool
+    receiver: ChecksumAddress
     exited_assets: Wei
     total_assets: Wei
 
@@ -28,6 +30,7 @@ class ExitRequest:
             timestamp=int(data['timestamp']),
             exit_queue_index=exit_queue_index,
             is_claimable=data['isClaimable'],
+            receiver=Web3.to_checksum_address(data['receiver']),
             exited_assets=Wei(int(data['exitedAssets'])),
             total_assets=Wei(int(data['totalAssets'])),
         )
