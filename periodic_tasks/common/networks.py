@@ -88,10 +88,18 @@ NETWORKS: dict[str, NetworkConfig] = {
     ),
     HOODI: NetworkConfig(
         **asdict(BASE_NETWORKS[HOODI]),
-        VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
-        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
-        STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
-        OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
+        VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0xcF619F9Dd8eB483239de953251fd13cB0F977c6C'
+        ),
+        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0x154628AC72533aad39aBdcaE2055Dced0b4Eef4D'
+        ),
+        STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0x6A2911F94da08Da01158d645Bf85152b338E015D'
+        ),
+        OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0xdC1347cC04d4a8945b98A09C3c5585286bbA5C2B'
+        ),
     ),
     GNOSIS: NetworkConfig(
         **asdict(BASE_NETWORKS[GNOSIS]),
