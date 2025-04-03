@@ -1,23 +1,14 @@
 from gql import gql
-from sw_utils.networks import HOLESKY
 from web3 import Web3
 from web3.types import BlockNumber, ChecksumAddress
 
 from periodic_tasks.common.graph import get_harvest_params
-from periodic_tasks.common.settings import NETWORK
 from periodic_tasks.common.typings import HarvestParams
 
 from .clients import graph_client
 from .typings import ExitRequest, LeveragePosition, OsTokenExitRequest
 
 DISABLED_LIQ_THRESHOLD = 2**64 - 1
-HOLESKY_UNCLAIMABLE_EXIT_REQUEST_IDS = [
-    '0x8a94e1d22d83990205843cda08376d16f150c9bb-210258902756807306422',
-    '0x8a94e1d22d83990205843cda08376d16f150c9bb-450147843736954431325',
-    '0x8a94e1d22d83990205843cda08376d16f150c9bb-458856763747647876703',
-    '0x8a94e1d22d83990205843cda08376d16f150c9bb-464067729736660634975',
-    '0x8a94e1d22d83990205843cda08376d16f150c9bb-465799992852070364982',
-]
 
 
 async def graph_get_leverage_positions(block_number: BlockNumber) -> list[LeveragePosition]:
@@ -147,9 +138,6 @@ async def graph_ostoken_exit_requests(
 
     result = []
     for data in response:
-        if NETWORK == HOLESKY and data['id'] in HOLESKY_UNCLAIMABLE_EXIT_REQUEST_IDS:
-            continue
-
         result.append(
             OsTokenExitRequest(
                 id=data['id'],

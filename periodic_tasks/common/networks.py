@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass
 
 from ens.constants import EMPTY_ADDR_HEX
 from eth_typing import ChecksumAddress
-from sw_utils.networks import CHIADO, GNOSIS, HOLESKY, MAINNET
+from sw_utils.networks import CHIADO, GNOSIS, HOODI, MAINNET
 from sw_utils.networks import NETWORKS as BASE_NETWORKS
 from sw_utils.networks import BaseNetworkConfig
 from web3 import Web3
@@ -41,7 +41,7 @@ PRICE_NETWORKS: dict[str, PriceNetworkConfig | None] = {
             '0xf7d4e7273e5015c96728a6b02f31c505ee184603'
         ),
     ),
-    HOLESKY: None,
+    HOODI: None,
     GNOSIS: None,
     CHIADO: None,
     SEPOLIA: PriceNetworkConfig(
@@ -86,19 +86,19 @@ NETWORKS: dict[str, NetworkConfig] = {
             '0x09e84205DF7c68907e619D07aFD90143c5763605'
         ),
     ),
-    HOLESKY: NetworkConfig(
-        **asdict(BASE_NETWORKS[HOLESKY]),
+    HOODI: NetworkConfig(
+        **asdict(BASE_NETWORKS[HOODI]),
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0x8f48130b9b96B58035b4A9389eCDaBC00d59d0c8'
+            '0xcF619F9Dd8eB483239de953251fd13cB0F977c6C'
         ),
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0xdB38cfc6e98a34Cdc60c568f607417E646C75B34'
+            '0x154628AC72533aad39aBdcaE2055Dced0b4Eef4D'
         ),
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0xFc8E3E7c919b4392D9F5B27015688e49c80015f0'
+            '0x6A2911F94da08Da01158d645Bf85152b338E015D'
         ),
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0x807305c086A99cbDBff07cB4256cE556d9d6F0af'
+            '0xdC1347cC04d4a8945b98A09C3c5585286bbA5C2B'
         ),
     ),
     GNOSIS: NetworkConfig(
