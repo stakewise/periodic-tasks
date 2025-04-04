@@ -32,6 +32,7 @@ async def graph_get_leverage_positions(block_number: BlockNumber) -> list[Levera
               id
               positionTicket
               timestamp
+              receiver
               exitQueueIndex
               isClaimable
               exitedAssets
