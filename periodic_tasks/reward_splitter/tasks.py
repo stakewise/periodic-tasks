@@ -195,7 +195,6 @@ async def _multicall(calls: list[tuple[ChecksumAddress, HexStr]]) -> HexBytes | 
         # Call the original contract when possible
         # as it makes it easier to find the transaction in the block explorer on the contract page
         contract = RewardSplitterContract(
-            abi_path='abi/IRewardSplitter.json',
             address=distinct_addresses[0],
             client=execution_client,
         )
@@ -220,7 +219,6 @@ def _get_reward_splitter_encoder() -> RewardSplitterEncoder:
     # Not for sending transactions.
     # It's okay to put zero address here.
     reward_splitter_contract = RewardSplitterContract(
-        abi_path='abi/IRewardSplitter.json',
         address=ZERO_CHECKSUM_ADDRESS,
         client=execution_client,
     )

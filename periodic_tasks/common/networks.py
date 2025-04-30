@@ -6,6 +6,7 @@ from sw_utils.networks import CHIADO, GNOSIS, HOODI, MAINNET
 from sw_utils.networks import NETWORKS as BASE_NETWORKS
 from sw_utils.networks import BaseNetworkConfig
 from web3 import Web3
+from web3.types import Wei
 
 ZERO_CHECKSUM_ADDRESS = Web3.to_checksum_address(EMPTY_ADDR_HEX)  # noqa
 
@@ -68,6 +69,11 @@ class NetworkConfig(BaseNetworkConfig):
     LEVERAGE_STRATEGY_CONTRACT_ADDRESS: ChecksumAddress
     STRATEGY_REGISTRY_CONTRACT_ADDRESS: ChecksumAddress
     OSTOKEN_ESCROW_CONTRACT_ADDRESS: ChecksumAddress
+    MERKLE_DISTRIBUTOR_CONTRACT_ADDRESS: ChecksumAddress
+    COWSWAP_API_URL: str
+    COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS: ChecksumAddress
+    COWSWAP_VERIFYING_CONTRACT_ADDRESS: ChecksumAddress
+    MIN_POOL_SWAP_AMOUNT: Wei
 
 
 NETWORKS: dict[str, NetworkConfig] = {
@@ -85,6 +91,17 @@ NETWORKS: dict[str, NetworkConfig] = {
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x09e84205DF7c68907e619D07aFD90143c5763605'
         ),
+        MERKLE_DISTRIBUTOR_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0xa9dc250df4ee9273d09cfa455da41fb1cac78d34'
+        ),
+        COWSWAP_API_URL='https://api.cow.fi/mainnet',
+        COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0xC92E8bdf79f0507f65a392b0ab4667716BFE0110'
+        ),
+        COWSWAP_VERIFYING_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0x9008D19f58AAbD9eD0D60971565AA8510560ab41'
+        ),
+        MIN_POOL_SWAP_AMOUNT=Wei(Web3.to_wei(0.01, 'ether')),
     ),
     HOODI: NetworkConfig(
         **asdict(BASE_NETWORKS[HOODI]),
@@ -100,6 +117,13 @@ NETWORKS: dict[str, NetworkConfig] = {
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xdC1347cC04d4a8945b98A09C3c5585286bbA5C2B'
         ),
+        MERKLE_DISTRIBUTOR_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0xc8eb13a2f1799fd7eb1ce7393259962ee2cd6514'
+        ),
+        COWSWAP_API_URL='',
+        COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        COWSWAP_VERIFYING_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        MIN_POOL_SWAP_AMOUNT=Wei(0),
     ),
     GNOSIS: NetworkConfig(
         **asdict(BASE_NETWORKS[GNOSIS]),
@@ -109,6 +133,17 @@ NETWORKS: dict[str, NetworkConfig] = {
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        MERKLE_DISTRIBUTOR_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0xfbceefdbb0ca25a4043b35ef49c2810425243710'
+        ),
+        COWSWAP_API_URL='https://api.cow.fi/xdai',
+        COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0xC92E8bdf79f0507f65a392b0ab4667716BFE0110'
+        ),
+        COWSWAP_VERIFYING_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0x9008D19f58AAbD9eD0D60971565AA8510560ab41'
+        ),
+        MIN_POOL_SWAP_AMOUNT=Wei(Web3.to_wei(0.1, 'ether')),
     ),
     CHIADO: NetworkConfig(
         **asdict(BASE_NETWORKS[CHIADO]),
@@ -118,5 +153,12 @@ NETWORKS: dict[str, NetworkConfig] = {
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        MERKLE_DISTRIBUTOR_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0xd0747320d5457256d0203dfe61209afbb90d22d7'
+        ),
+        COWSWAP_API_URL='',
+        COWSWAP_VAULT_RELAYER_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        COWSWAP_VERIFYING_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        MIN_POOL_SWAP_AMOUNT=Wei(0),
     ),
 }
