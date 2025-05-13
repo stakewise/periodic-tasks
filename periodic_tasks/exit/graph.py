@@ -181,6 +181,7 @@ async def graph_get_exit_requests(ids: list[str], block_number: BlockNumber) -> 
             id
             positionTicket
             timestamp
+            receiver
             exitQueueIndex
             isClaimable
             exitedAssets
