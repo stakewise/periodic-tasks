@@ -72,6 +72,10 @@ async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
     """Process osTokenExitRequests from graph and claim exited assets."""
     exit_requests = await fetch_ostoken_exit_requests(block_number)
 
+    if not exit_requests:
+        logger.info('No osToken exit requests found')
+        return
+
     logger.info('Force assets claim for %d exit requests...', len(exit_requests))
     vault_to_harvest_params: dict[ChecksumAddress, HarvestParams | None] = {}
 
@@ -108,8 +112,13 @@ async def fetch_leverage_positions(block_number: BlockNumber) -> list[LeveragePo
     borrow_ltv = await strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
     vault_ltv = await strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
     all_leverage_positions = await graph_get_leverage_positions(block_number=block_number)
+
     # Get aave positions by borrow ltv
     aave_positions = [pos for pos in all_leverage_positions if pos.borrow_ltv > borrow_ltv]
+    if not aave_positions:
+        logger.info('No risky Aave leverage positions found')
+        return []
+
     # Get vault positions by vault ltv
     proxy_to_position = {position.proxy: position for position in all_leverage_positions}
     allocators = await graph_get_allocators(
