@@ -132,6 +132,9 @@ async def graph_ostoken_exit_requests(
     params = {'ltv': str(ltv), 'block': block_number}
     response = await graph_client.fetch_pages(query, params=params)
 
+    if not response:
+        return []
+
     exit_requests = await graph_get_exit_requests(
         ids=[item['id'] for item in response], block_number=block_number
     )
