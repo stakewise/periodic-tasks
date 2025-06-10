@@ -27,8 +27,19 @@ async def update_vault_max_ltv_user() -> None:
 
     # Get max LTV user for vault
     max_ltv_users = await get_max_ltv_users()
+
+    if not max_ltv_users:
+        logger.info('No max LTV users found. Nothing to update.')
+        return
+
     for user in max_ltv_users:
+        if user.address == user.prev_address:
+            logger.info('Max LTV user did not change since last update. Skip updating user.')
+            continue
+
+        logger.info('Updating max LTV user for vault %s', user.vault)
         await handle_max_ltv_user(user)
+
     logger.info('Completed')
 
 
@@ -50,13 +61,16 @@ async def get_max_ltv_users() -> list[VaultMaxLtvUser]:
         logger.info('Current LTV for vault %s: %s', vault, Decimal(ltv) / WAD)
 
         # Get prev max LTV user
-        prev_max_ltv_user = await vault_user_ltv_tracker_contract.get_max_ltv_user(vault)
-        if max_ltv_user_address == prev_max_ltv_user:
-            logger.info('Max LTV user did not change since last update. Skip updating user.')
-            continue
+        prev_max_ltv_user_address = await vault_user_ltv_tracker_contract.get_max_ltv_user(vault)
+
+        # Build VaultMaxLtvUser object
         max_ltv_users.append(
             VaultMaxLtvUser(
-                address=max_ltv_user_address, vault=vault, ltv=ltv, harvest_params=harvest_params
+                address=max_ltv_user_address,
+                prev_address=prev_max_ltv_user_address,
+                vault=vault,
+                ltv=ltv,
+                harvest_params=harvest_params,
             )
         )
 
