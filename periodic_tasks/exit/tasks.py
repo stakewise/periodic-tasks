@@ -26,7 +26,6 @@ from .graph import (
 from .settings import LTV_PERCENT_DELTA
 from .typings import LeveragePosition, OsTokenExitRequest
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 WAD = 10**18

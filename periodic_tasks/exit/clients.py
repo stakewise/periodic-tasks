@@ -7,7 +7,6 @@ from periodic_tasks.common.settings import GRAPH_PAGE_SIZE
 
 from .settings import GRAPH_API_RETRY_TIMEOUT, GRAPH_API_TIMEOUT, GRAPH_API_URL
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 execution_client = get_execution_client()
