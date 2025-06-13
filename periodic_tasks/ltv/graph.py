@@ -9,7 +9,6 @@ from periodic_tasks.common.typings import HarvestParams
 
 from .clients import graph_client
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

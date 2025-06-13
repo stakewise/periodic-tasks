@@ -7,7 +7,6 @@ from web3.middleware.signing import async_construct_sign_and_send_raw_middleware
 
 from periodic_tasks.common.settings import EXECUTION_ENDPOINT, HOT_WALLET_PRIVATE_KEY
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

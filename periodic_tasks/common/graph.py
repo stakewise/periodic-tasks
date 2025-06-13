@@ -9,7 +9,6 @@ from web3.types import Wei
 
 from periodic_tasks.common.typings import HarvestParams, Vault
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

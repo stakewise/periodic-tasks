@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from periodic_tasks.common.clients import hot_wallet_account, setup_execution_client
-from periodic_tasks.common.logs import setup_gql_log_level
+from periodic_tasks.common.logs import setup_logging
 from periodic_tasks.common.sentry import setup_sentry
 from periodic_tasks.common.settings import NETWORK
 from periodic_tasks.ltv.clients import execution_client
@@ -23,6 +23,6 @@ async def main() -> None:
     await update_vault_max_ltv_user()
 
 
+setup_logging()
 setup_sentry()
-setup_gql_log_level()
 asyncio.run(main())

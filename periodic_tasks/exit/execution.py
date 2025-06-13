@@ -12,7 +12,6 @@ from .clients import execution_client
 from .contracts import keeper_contract, leverage_strategy_contract, multicall_contract
 from .typings import ExitRequest
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
