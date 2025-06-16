@@ -1,332 +1,5 @@
 [
   {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "keeper",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "vaultsRegistry",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "osTokenVaultController",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "osTokenConfig",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "osTokenVaultEscrow",
-            "type": "address"
-          },
-          {
-            "internalType": "address",
-            "name": "curatorsRegistry",
-            "type": "address"
-          },
-          {
-            "internalType": "uint64",
-            "name": "exitingAssetsClaimDelay",
-            "type": "uint64"
-          }
-        ],
-        "internalType": "struct IEthMetaVault.EthMetaVaultConstructorArgs",
-        "name": "args",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "inputs": [],
-    "name": "AccessDenied",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "target",
-        "type": "address"
-      }
-    ],
-    "name": "AddressEmptyCode",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "AlreadyAdded",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "AlreadyRemoved",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "CapacityExceeded",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "implementation",
-        "type": "address"
-      }
-    ],
-    "name": "ERC1967InvalidImplementation",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ERC1967NonPayable",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "EjectingVault",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "EmptySubVaults",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ExitRequestNotProcessed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "FailedCall",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "balance",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "needed",
-        "type": "uint256"
-      }
-    ],
-    "name": "InsufficientBalance",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidAssets",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidCapacity",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidCheckpointValue",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidCurator",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidFeePercent",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidFeeRecipient",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidInitialization",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidPosition",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidSecurityDeposit",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidShares",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "InvalidVault",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "LowLtv",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotCollateralized",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotHarvested",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotInitializing",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "OutOfRangeAccess",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ReentrancyGuardReentrantCall",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "RewardsNonceIsHigher",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint8",
-        "name": "bits",
-        "type": "uint8"
-      },
-      {
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "SafeCastOverflowedUintDowncast",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "SafeCastOverflowedUintToInt",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "TooEarlyUpdate",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "UUPSUnauthorizedCallContext",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "slot",
-        "type": "bytes32"
-      }
-    ],
-    "name": "UUPSUnsupportedProxiableUUID",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "UnclaimedAssets",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "UpgradeFailed",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ValueNotChanged",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ZeroAddress",
-    "type": "error"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "newAdmin",
-        "type": "address"
-      }
-    ],
-    "name": "AdminUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "assets",
-        "type": "uint256"
-      }
-    ],
-    "name": "AssetsDonated",
-    "type": "event"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -467,25 +140,6 @@
         "type": "address"
       },
       {
-        "indexed": false,
-        "internalType": "uint16",
-        "name": "feePercent",
-        "type": "uint16"
-      }
-    ],
-    "name": "FeePercentUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      },
-      {
         "indexed": true,
         "internalType": "address",
         "name": "feeRecipient",
@@ -524,13 +178,19 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint64",
-        "name": "version",
-        "type": "uint64"
+        "indexed": true,
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "keysManager",
+        "type": "address"
       }
     ],
-    "name": "Initialized",
+    "name": "KeysManagerUpdated",
     "type": "event"
   },
   {
@@ -735,121 +395,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rewardsNonce",
-        "type": "uint256"
-      }
-    ],
-    "name": "RewardsNonceUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "vault",
-        "type": "address"
-      }
-    ],
-    "name": "SubVaultAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "vault",
-        "type": "address"
-      }
-    ],
-    "name": "SubVaultEjected",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "vault",
-        "type": "address"
-      }
-    ],
-    "name": "SubVaultEjecting",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "caller",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "curator",
-        "type": "address"
-      }
-    ],
-    "name": "SubVaultsCuratorUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "totalAssetsDelta",
-        "type": "int256"
-      }
-    ],
-    "name": "SubVaultsHarvested",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "implementation",
-        "type": "address"
-      }
-    ],
-    "name": "Upgraded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "owner",
@@ -884,30 +429,55 @@
     "type": "event"
   },
   {
-    "inputs": [],
-    "name": "UPGRADE_INTERFACE_VERSION",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
+    "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "publicKey",
+        "type": "bytes"
+      }
+    ],
+    "name": "ValidatorRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "address",
-        "name": "vault",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "validatorsManager",
         "type": "address"
       }
     ],
-    "name": "addSubVault",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "name": "ValidatorsManagerUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "validatorsRoot",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ValidatorsRootUpdated",
+    "type": "event"
   },
   {
     "inputs": [],
@@ -1024,36 +594,6 @@
   {
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "exitQueueIndex",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "vault",
-            "type": "address"
-          },
-          {
-            "internalType": "uint64",
-            "name": "timestamp",
-            "type": "uint64"
-          }
-        ],
-        "internalType": "struct IVaultSubVaults.SubVaultExitRequest[]",
-        "name": "exitRequests",
-        "type": "tuple[]"
-      }
-    ],
-    "name": "claimSubVaultsExitedAssets",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "shares",
         "type": "uint256"
@@ -1143,46 +683,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "depositToSubVaults",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "donateAssets",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "vault",
-        "type": "address"
-      }
-    ],
-    "name": "ejectSubVault",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "ejectingSubVault",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -1233,39 +733,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getExitQueueData",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "queuedShares",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "unclaimedAssets",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "totalExitingTickets",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "totalExitingAssets",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalTickets",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -1298,19 +765,6 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getSubVaults",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -1376,6 +830,19 @@
     "name": "liquidateOsToken",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "mevEscrow",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1459,6 +926,26 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "queuedShares",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "",
+        "type": "uint128"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "receiveFromMevEscrow",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -1484,25 +971,44 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "newAdmin",
-        "type": "address"
-      }
-    ],
-    "name": "setAdmin",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "validatorsRegistryRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "deadline",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "validators",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signatures",
+            "type": "bytes"
+          },
+          {
+            "internalType": "string",
+            "name": "exitSignaturesIpfsHash",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct IKeeperValidators.ApprovalParams",
+        "name": "keeperParams",
+        "type": "tuple"
+      },
       {
-        "internalType": "uint16",
-        "name": "_feePercent",
-        "type": "uint16"
+        "internalType": "bytes",
+        "name": "validatorsManagerSignature",
+        "type": "bytes"
       }
     ],
-    "name": "setFeePercent",
+    "name": "registerValidators",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1537,57 +1043,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "curator",
+        "name": "_validatorsManager",
         "type": "address"
       }
     ],
-    "name": "setSubVaultsCurator",
+    "name": "setValidatorsManager",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "subVaultsCurator",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "vault",
-        "type": "address"
-      }
-    ],
-    "name": "subVaultsStates",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint128",
-            "name": "stakedShares",
-            "type": "uint128"
-          },
-          {
-            "internalType": "uint128",
-            "name": "queuedShares",
-            "type": "uint128"
-          }
-        ],
-        "internalType": "struct IVaultSubVaults.SubVaultState",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1605,6 +1067,19 @@
   },
   {
     "inputs": [],
+    "name": "totalExitingAssets",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "",
+        "type": "uint128"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "totalShares",
     "outputs": [
       {
@@ -1614,25 +1089,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "osTokenShares",
-        "type": "uint256"
-      }
-    ],
-    "name": "transferOsTokenPositionToEscrow",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "positionTicket",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1778,21 +1234,16 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "validatorsManager",
+    "outputs": [
       {
         "internalType": "address",
-        "name": "newImplementation",
+        "name": "",
         "type": "address"
-      },
-      {
-        "internalType": "bytes",
-        "name": "data",
-        "type": "bytes"
       }
     ],
-    "name": "upgradeToAndCall",
-    "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1833,9 +1284,5 @@
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
   }
 ]

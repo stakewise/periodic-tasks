@@ -8,8 +8,9 @@ from periodic_tasks.common.execution import transaction_gas_wrapper
 from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
 from periodic_tasks.common.typings import HarvestParams
 
+from ..common.contracts import multicall_contract
 from .clients import execution_client
-from .contracts import keeper_contract, leverage_strategy_contract, multicall_contract
+from .contracts import keeper_contract, leverage_strategy_contract
 from .typings import ExitRequest
 
 logger = logging.getLogger(__name__)

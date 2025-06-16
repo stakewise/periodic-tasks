@@ -3,11 +3,13 @@ import logging
 import sys
 from pathlib import Path
 
-from eth_typing import ChecksumAddress, HexStr
 from hexbytes import HexBytes
 from web3 import AsyncWeb3
 from web3.contract.async_contract import AsyncContractEvents, AsyncContractFunctions
-from web3.types import Wei
+from web3.types import BlockNumber, ChecksumAddress, HexStr, Wei
+
+from periodic_tasks.common.settings import network_config
+from periodic_tasks.exit.clients import execution_client
 
 from .typings import HarvestParams
 
@@ -44,3 +46,53 @@ class ContractWrapper:
         return HarvestParams(
             rewards_root=HexBytes(b'\x00' * 32), reward=Wei(0), unlocked_mev_reward=Wei(0), proof=[]
         )
+
+
+class VaultStateEncoderMixin:
+    def __init__(self, contract: ContractWrapper):
+        self.contract = contract
+
+    def update_vault_state(self, harvest_params: HarvestParams) -> HexStr:
+        return self.contract.encode_abi(
+            fn_name='updateVaultState',
+            args=[
+                (
+                    harvest_params.rewards_root,
+                    harvest_params.reward,
+                    harvest_params.unlocked_mev_reward,
+                    harvest_params.proof,
+                ),
+            ],
+        )
+
+
+class VaultEncoder(VaultStateEncoderMixin):
+    pass
+
+
+class VaultContract(ContractWrapper):
+    def encoder(self) -> VaultEncoder:
+        return VaultEncoder(self)
+
+
+class MulticallContract(ContractWrapper):
+    async def aggregate(
+        self,
+        data: list[tuple[ChecksumAddress, HexStr]],
+        block_number: BlockNumber | None = None,
+    ) -> tuple[BlockNumber, list]:
+        return await self.contract.functions.aggregate(data).call(block_identifier=block_number)
+
+    async def tx_aggregate(
+        self,
+        data: list[tuple[ChecksumAddress, HexStr]],
+    ) -> HexStr:
+        tx_hash = await self.contract.functions.aggregate(data).transact()
+        return HexStr(tx_hash.hex())
+
+
+multicall_contract = MulticallContract(
+    abi_path='abi/Multicall.json',
+    address=network_config.MULTICALL_CONTRACT_ADDRESS,
+    client=execution_client,
+)

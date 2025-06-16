@@ -7,6 +7,7 @@ from web3.types import ChecksumAddress, Wei
 @dataclass
 class ExitRequest:
     id: str
+    vault: ChecksumAddress
     position_ticket: int
     timestamp: int
     exit_queue_index: int | None
@@ -26,6 +27,7 @@ class ExitRequest:
         )
         return ExitRequest(
             id=data['id'],
+            vault=Web3.to_checksum_address(data['vault']['id']),
             position_ticket=int(data['positionTicket']),
             timestamp=int(data['timestamp']),
             exit_queue_index=exit_queue_index,

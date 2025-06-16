@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from gql import gql
 from web3 import Web3
 from web3.types import BlockNumber, ChecksumAddress
@@ -37,6 +39,9 @@ async def graph_get_leverage_positions(block_number: BlockNumber) -> list[Levera
               isClaimable
               exitedAssets
               totalAssets
+              vault {
+                id
+              }
             }
           }
         }
@@ -135,7 +140,7 @@ async def graph_ostoken_exit_requests(
     if not response:
         return []
 
-    exit_requests = await graph_get_exit_requests(
+    exit_requests = await graph_get_exit_requests_by_ids(
         ids=[item['id'] for item in response], block_number=block_number
     )
     id_to_exit_request = {exit_req.id: exit_req for exit_req in exit_requests}
@@ -170,7 +175,9 @@ async def graph_get_leverage_position_owner(proxy: ChecksumAddress) -> ChecksumA
     return Web3.to_checksum_address(response['leverageStrategyPositions'][0]['user'])
 
 
-async def graph_get_exit_requests(ids: list[str], block_number: BlockNumber) -> list[ExitRequest]:
+async def graph_get_exit_requests_by_ids(
+    ids: list[str], block_number: BlockNumber
+) -> list[ExitRequest]:
     query = gql(
         """
         query exitRequestQuery($ids: [String], $block: Int, $first: Int, $skip: Int) {
@@ -189,6 +196,9 @@ async def graph_get_exit_requests(ids: list[str], block_number: BlockNumber) -> 
             isClaimable
             exitedAssets
             totalAssets
+            vault {
+              id
+            }
           }
         }
         """
@@ -198,6 +208,45 @@ async def graph_get_exit_requests(ids: list[str], block_number: BlockNumber) -> 
     result = []
     for data in response:
         result.append(ExitRequest.from_graph(data))
+    return result
+
+
+async def graph_get_exit_requests_by_vaults(
+    vaults: list[ChecksumAddress], block_number: BlockNumber
+) -> dict[ChecksumAddress, list[ExitRequest]]:
+    query = gql(
+        """
+        query exitRequestQuery($vaults: [String], $block: Int, $first: Int, $skip: Int) {
+          exitRequests(
+            block: { number: $block },
+            where: { vault_in: $vaults },
+            orderBy: id,
+            first: $first,
+            skip: $skip
+          ) {
+            id
+            positionTicket
+            timestamp
+            receiver
+            exitQueueIndex
+            isClaimable
+            exitedAssets
+            totalAssets
+            vault {
+              id
+            }
+          }
+        }
+        """
+    )
+    params = {'block': block_number, 'vaults': [v.lower() for v in vaults]}
+    response = await graph_client.fetch_pages(query, params=params)
+    result = defaultdict(list)
+
+    for data in response:
+        vault = Web3.to_checksum_address(data['vault']['id'])
+        result[vault].append(ExitRequest.from_graph(data))
+
     return result
 
 

@@ -6,12 +6,12 @@ from hexbytes import HexBytes
 from web3 import Web3
 from web3.types import Wei
 
+from periodic_tasks.common.contracts import multicall_contract
 from periodic_tasks.common.graph import get_graph_vaults
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
 from periodic_tasks.common.typings import HarvestParams
 from periodic_tasks.common.utils import to_chunks
-from periodic_tasks.exit.contracts import multicall_contract
 from periodic_tasks.exit.typings import ExitRequest
 from periodic_tasks.reward_splitter.typings import RewardSplitter
 
