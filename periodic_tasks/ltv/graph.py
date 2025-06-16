@@ -4,9 +4,6 @@ from eth_typing import ChecksumAddress
 from gql import gql
 from web3 import Web3
 
-from periodic_tasks.common.graph import get_harvest_params
-from periodic_tasks.common.typings import HarvestParams
-
 from .clients import graph_client
 
 logger = logging.getLogger(__name__)
@@ -54,7 +51,3 @@ async def graph_get_vault_max_ltv_allocator(vault_address: str) -> ChecksumAddre
         return None
 
     return Web3.to_checksum_address(allocators[0]['address'])
-
-
-async def graph_get_harvest_params(vault_address: ChecksumAddress) -> HarvestParams | None:
-    return await get_harvest_params(graph_client, vault_address)
