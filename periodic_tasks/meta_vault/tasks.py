@@ -7,7 +7,7 @@ from web3.types import BlockNumber, HexStr
 
 from periodic_tasks.common.contracts import VaultContract, multicall_contract
 from periodic_tasks.common.execution import wait_for_tx_confirmation
-from periodic_tasks.common.graph import get_graph_vaults
+from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.settings import NETWORK
 from periodic_tasks.common.typings import Vault
@@ -39,7 +39,7 @@ async def meta_vault_update_state(
     block_number: BlockNumber,
 ) -> None:
     # Get sub vaults
-    sub_vaults = await get_graph_vaults(
+    sub_vaults = await graph_get_vaults(
         graph_client=graph_client,
         vaults=meta_vault.sub_vaults,
     )

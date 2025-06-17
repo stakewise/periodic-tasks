@@ -8,47 +8,12 @@ from web3 import Web3
 from web3.types import Wei
 
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
-from periodic_tasks.common.typings import HarvestParams, Vault
+from periodic_tasks.common.typings import Vault
 
 logger = logging.getLogger(__name__)
 
 
-async def get_harvest_params(
-    graph_client: GraphClient, vault_address: ChecksumAddress
-) -> HarvestParams | None:
-    query = gql(
-        """
-        query VaultQuery($vault: String) {
-          vault(
-            id: $vault
-          ) {
-            proof
-            proofReward
-            proofUnlockedMevReward
-            rewardsRoot
-          }
-        }
-        """
-    )
-    params = {
-        'vault': vault_address.lower(),
-    }
-
-    response = await graph_client.run_query(query, params)
-    vault_data = response['vault']  # pylint: disable=unsubscriptable-object
-
-    if not all(vault_data):
-        return None
-
-    return HarvestParams(
-        rewards_root=HexBytes(Web3.to_bytes(hexstr=vault_data['rewardsRoot'])),
-        reward=Wei(int(vault_data['proofReward'])),
-        unlocked_mev_reward=Wei(int(vault_data['proofUnlockedMevReward'])),
-        proof=[HexBytes(Web3.to_bytes(hexstr=p)) for p in vault_data['proof']],
-    )
-
-
-async def get_graph_vaults(
+async def graph_get_vaults(
     graph_client: GraphClient, vaults: list[ChecksumAddress]
 ) -> dict[ChecksumAddress, Vault]:
     """

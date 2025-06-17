@@ -1,13 +1,11 @@
 import logging
 from decimal import Decimal
 
-from .clients import execution_client
+from periodic_tasks.common.graph import graph_get_vaults
+
+from .clients import execution_client, graph_client
 from .contracts import vault_user_ltv_tracker_contract
-from .graph import (
-    graph_get_harvest_params,
-    graph_get_ostoken_vaults,
-    graph_get_vault_max_ltv_allocator,
-)
+from .graph import graph_get_ostoken_vaults, graph_get_vault_max_ltv_allocator
 from .typings import VaultMaxLtvUser
 
 logger = logging.getLogger(__name__)
@@ -44,7 +42,14 @@ async def update_vault_max_ltv_user() -> None:
 
 async def get_max_ltv_users() -> list[VaultMaxLtvUser]:
     ostoken_vaults = await graph_get_ostoken_vaults()
+
+    if not ostoken_vaults:
+        logger.info('No OsToken vaults found')
+        return []
+
     max_ltv_users = []
+    graph_vaults = await graph_get_vaults(graph_client=graph_client, vaults=ostoken_vaults)
+
     for vault in ostoken_vaults:
         max_ltv_user_address = await graph_get_vault_max_ltv_allocator(vault)
         if max_ltv_user_address is None:
@@ -52,7 +57,7 @@ async def get_max_ltv_users() -> list[VaultMaxLtvUser]:
             continue
         logger.info('max LTV user for vault %s is %s', vault, max_ltv_user_address)
 
-        harvest_params = await graph_get_harvest_params(vault)
+        harvest_params = graph_vaults[vault].harvest_params
         logger.debug('Harvest params for vault %s: %s', vault, harvest_params)
 
         # Get current LTV

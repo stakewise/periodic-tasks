@@ -4,9 +4,6 @@ from gql import gql
 from web3 import Web3
 from web3.types import BlockNumber, ChecksumAddress
 
-from periodic_tasks.common.graph import get_harvest_params
-from periodic_tasks.common.typings import HarvestParams
-
 from .clients import graph_client
 from .typings import ExitRequest, LeveragePosition, OsTokenExitRequest
 
@@ -248,7 +245,3 @@ async def graph_get_exit_requests_by_vaults(
         result[vault].append(ExitRequest.from_graph(data))
 
     return result
-
-
-async def graph_get_harvest_params(vault_address: ChecksumAddress) -> HarvestParams | None:
-    return await get_harvest_params(graph_client, vault_address)

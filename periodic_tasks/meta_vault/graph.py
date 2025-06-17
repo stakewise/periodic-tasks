@@ -1,6 +1,6 @@
 from eth_typing import ChecksumAddress
 
-from periodic_tasks.common.graph import get_graph_vaults
+from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.typings import Vault
 
 from .clients import graph_client
@@ -9,7 +9,7 @@ from .clients import graph_client
 async def graph_get_metavaults(
     meta_vault_addresses: list[ChecksumAddress],
 ) -> dict[ChecksumAddress, Vault]:
-    vaults = await get_graph_vaults(
+    vaults = await graph_get_vaults(
         graph_client=graph_client,
         vaults=meta_vault_addresses,
     )

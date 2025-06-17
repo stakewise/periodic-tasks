@@ -1,12 +1,11 @@
 import logging
 
-from eth_typing import ChecksumAddress
 from web3.types import BlockNumber
 
+from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.typings import HarvestParams
-from periodic_tasks.ltv.graph import graph_get_harvest_params
 
-from .clients import execution_client
+from .clients import execution_client, graph_client
 from .contracts import (
     leverage_strategy_contract,
     ostoken_vault_escrow_contract,
@@ -52,13 +51,12 @@ async def handle_leverage_positions(block_number: BlockNumber) -> None:
 
     logger.info('Checking %d leverage positions...', len(leverage_positions))
 
-    vault_to_harvest_params: dict[ChecksumAddress, HarvestParams | None] = {}
+    vault_addresses = list(set(position.vault for position in leverage_positions))
+    graph_vaults = await graph_get_vaults(graph_client=graph_client, vaults=vault_addresses)
+
     # check by position borrow ltv
     for position in leverage_positions:
-        harvest_params = vault_to_harvest_params.get(position.vault)
-        if not harvest_params:
-            harvest_params = await graph_get_harvest_params(position.vault)
-            vault_to_harvest_params[position.vault] = harvest_params
+        harvest_params = graph_vaults[position.vault].harvest_params
 
         await handle_leverage_position(
             position=position,
@@ -76,15 +74,13 @@ async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
         return
 
     logger.info('Force assets claim for %d exit requests...', len(exit_requests))
-    vault_to_harvest_params: dict[ChecksumAddress, HarvestParams | None] = {}
+    vault_addresses = list(set(request.vault for request in exit_requests))
+    graph_vaults = await graph_get_vaults(graph_client=graph_client, vaults=vault_addresses)
 
     for os_token_exit_request in exit_requests:
         position_owner = await graph_get_leverage_position_owner(os_token_exit_request.owner)
         vault = os_token_exit_request.vault
-        harvest_params = vault_to_harvest_params.get(vault)
-        if not harvest_params:
-            harvest_params = await graph_get_harvest_params(vault)
-            vault_to_harvest_params[vault] = harvest_params
+        harvest_params = graph_vaults[vault].harvest_params
 
         logger.info(
             'Claiming exited assets: vault=%s, user=%s...',

@@ -7,7 +7,7 @@ from web3 import Web3
 from web3.types import Wei
 
 from periodic_tasks.common.contracts import multicall_contract
-from periodic_tasks.common.graph import get_graph_vaults
+from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
 from periodic_tasks.common.typings import HarvestParams
@@ -50,7 +50,7 @@ async def process_reward_splitters() -> None:
 
     vaults = [rs.vault for rs in reward_splitters]
 
-    graph_vaults_map = await get_graph_vaults(graph_client=graph_client, vaults=vaults)
+    graph_vaults_map = await graph_get_vaults(graph_client=graph_client, vaults=vaults)
 
     splitter_to_exit_requests = await graph_get_claimable_exit_requests(
         block_number=block['number'], receivers=[rs.address for rs in reward_splitters]
