@@ -8,9 +8,8 @@ from web3 import AsyncWeb3
 from web3.contract.async_contract import AsyncContractEvents, AsyncContractFunctions
 from web3.types import BlockNumber, ChecksumAddress, HexStr, Wei
 
-from periodic_tasks.common.settings import network_config
-from periodic_tasks.exit.clients import execution_client
-
+from .clients import execution_client
+from .settings import network_config
 from .typings import HarvestParams
 
 logger = logging.getLogger(__name__)
@@ -48,13 +47,13 @@ class ContractWrapper:
         )
 
 
-class VaultStateEncoderMixin:
+class VaultEncoder:
     def __init__(self, contract: ContractWrapper):
         self.contract = contract
 
-    def update_vault_state(self, harvest_params: HarvestParams) -> HexStr:
+    def update_state(self, harvest_params: HarvestParams) -> HexStr:
         return self.contract.encode_abi(
-            fn_name='updateVaultState',
+            fn_name='updateState',
             args=[
                 (
                     harvest_params.rewards_root,
@@ -64,10 +63,6 @@ class VaultStateEncoderMixin:
                 ),
             ],
         )
-
-
-class VaultEncoder(VaultStateEncoderMixin):
-    pass
 
 
 class VaultContract(ContractWrapper):

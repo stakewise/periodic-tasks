@@ -7,7 +7,6 @@ from sw_utils.graph.client import GraphClient
 from web3 import Web3
 from web3.types import Wei
 
-from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.typings import Vault
 
 logger = logging.getLogger(__name__)
@@ -62,7 +61,7 @@ async def graph_get_vaults(
 
         if vault_item['rewardsRoot'] is None:
             # Create empty harvest params
-            rewards_root = HexBytes(Web3.to_bytes(hexstr=ZERO_CHECKSUM_ADDRESS))
+            rewards_root = HexBytes(b'\x00' * 32)
             proof_reward = Wei(0)
             proof_unlocked_mev_reward = Wei(0)
             proof = []

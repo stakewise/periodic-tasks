@@ -5,6 +5,7 @@ from sw_utils import GNO_NETWORKS, convert_to_mgno
 from web3 import Web3
 from web3.types import BlockNumber, HexStr
 
+from periodic_tasks.common.clients import execution_client
 from periodic_tasks.common.contracts import VaultContract, multicall_contract
 from periodic_tasks.common.execution import wait_for_tx_confirmation
 from periodic_tasks.common.graph import graph_get_vaults
@@ -17,7 +18,7 @@ from periodic_tasks.meta_vault.graph import graph_get_metavaults
 from periodic_tasks.meta_vault.typings import SubVaultExitRequest
 
 from . import settings
-from .clients import execution_client, graph_client
+from .clients import graph_client
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +63,7 @@ async def meta_vault_update_state(
         calls.append(
             (
                 sub_vault.address,
-                vault_encoder.update_vault_state(
+                vault_encoder.update_state(
                     sub_vault.harvest_params,
                 ),
             )
