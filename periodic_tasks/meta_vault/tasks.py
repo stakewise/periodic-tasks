@@ -6,7 +6,11 @@ from web3 import Web3
 from web3.types import BlockNumber, HexStr
 
 from periodic_tasks.common.clients import execution_client
-from periodic_tasks.common.contracts import VaultContract, multicall_contract
+from periodic_tasks.common.contracts import (
+    VaultContract,
+    keeper_contract,
+    multicall_contract,
+)
 from periodic_tasks.common.execution import wait_for_tx_confirmation
 from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
@@ -110,11 +114,18 @@ async def meta_vault_update_state(
         logger.info('No sub vault exit requests to claim for meta vault')
 
     # Update meta vault state
-    # todo: check meta vault rewards nonce
-    calls.append((meta_vault.address, meta_vault_encoder.update_state(meta_vault.harvest_params)))
+    is_rewards_nonce_outdated = await is_meta_vault_rewards_nonce_outdated(
+        meta_vault_contract=meta_vault_contract,
+        block_number=block_number,
+    )
+
+    if sub_vaults_to_harvest or is_rewards_nonce_outdated:
+        calls.append(
+            (meta_vault.address, meta_vault_encoder.update_state(meta_vault.harvest_params))
+        )
 
     if not calls:
-        logger.info('No changes in sub vaults. State update for meta vault will be skipped.')
+        logger.info('Meta vault state is up-to-date, no updates needed')
         return
 
     # Submit the transaction
@@ -127,6 +138,27 @@ async def meta_vault_update_state(
     logger.info('Waiting for transaction %s confirmation', tx_hash)
     await wait_for_tx_confirmation(execution_client, tx_hash)
     logger.info('Transaction %s confirmed', tx_hash)
+
+
+async def is_meta_vault_rewards_nonce_outdated(
+    meta_vault_contract: MetaVaultContract,
+    block_number: BlockNumber,
+) -> bool:
+    """
+    Check if the meta vault rewards nonce is outdated compared to the keeper contract.
+    """
+    meta_vault_rewards_nonce = await meta_vault_contract.rewards_nonce(block_number=block_number)
+
+    if meta_vault_rewards_nonce is None:
+        # Event not found, consider rewards nonce is outdated
+        return True
+
+    keeper_rewards_nonce = await keeper_contract.rewards_nonce()
+
+    if meta_vault_rewards_nonce < keeper_rewards_nonce:
+        return True
+
+    return False
 
 
 async def process_deposit_to_sub_vaults(meta_vault_address: ChecksumAddress) -> None:

@@ -1,8 +1,6 @@
 import logging
 
-from eth_typing import ChecksumAddress
 from web3 import Web3
-from web3.types import BlockNumber
 
 from periodic_tasks.common.contracts import ContractWrapper
 from periodic_tasks.common.settings import network_config
@@ -36,13 +34,6 @@ class StrategiesRegistryContract(ContractWrapper):
         return Web3.to_int(value)
 
 
-class KeeperContract(ContractWrapper):
-    async def can_harvest(
-        self, vault: ChecksumAddress, block_number: BlockNumber | None = None
-    ) -> bool:
-        return await self.contract.functions.canHarvest(vault).call(block_identifier=block_number)
-
-
 leverage_strategy_contract = LeverageStrategyContract(
     abi_path='abi/ILeverageStrategy.json',
     address=network_config.LEVERAGE_STRATEGY_CONTRACT_ADDRESS,
@@ -58,11 +49,5 @@ strategy_registry_contract = StrategiesRegistryContract(
 ostoken_vault_escrow_contract = OsTokenVaultEscrowContract(
     abi_path='abi/IOsTokenVaultEscrow.json',
     address=network_config.OSTOKEN_ESCROW_CONTRACT_ADDRESS,
-    client=execution_client,
-)
-
-keeper_contract = KeeperContract(
-    abi_path='abi/IKeeper.json',
-    address=network_config.KEEPER_CONTRACT_ADDRESS,
     client=execution_client,
 )

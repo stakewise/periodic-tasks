@@ -5,11 +5,15 @@ from pathlib import Path
 
 from hexbytes import HexBytes
 from web3 import AsyncWeb3
-from web3.contract.async_contract import AsyncContractEvents, AsyncContractFunctions
-from web3.types import BlockNumber, ChecksumAddress, HexStr, Wei
+from web3.contract.async_contract import (
+    AsyncContractEvent,
+    AsyncContractEvents,
+    AsyncContractFunctions,
+)
+from web3.types import BlockNumber, ChecksumAddress, EventData, HexStr, Wei
 
 from .clients import execution_client
-from .settings import network_config
+from .settings import EVENTS_BLOCKS_RANGE_INTERVAL, network_config
 from .typings import HarvestParams
 
 logger = logging.getLogger(__name__)
@@ -45,6 +49,25 @@ class ContractWrapper:
         return HarvestParams(
             rewards_root=HexBytes(b'\x00' * 32), reward=Wei(0), unlocked_mev_reward=Wei(0), proof=[]
         )
+
+    async def _get_last_event(
+        self,
+        event: type[AsyncContractEvent],
+        from_block: BlockNumber,
+        to_block: BlockNumber,
+        argument_filters: dict | None = None,
+    ) -> EventData | None:
+        blocks_range = EVENTS_BLOCKS_RANGE_INTERVAL
+        while to_block >= from_block:
+            events = await event.get_logs(
+                fromBlock=BlockNumber(max(to_block - blocks_range, from_block)),
+                toBlock=to_block,
+                argument_filters=argument_filters,
+            )
+            if events:
+                return events[-1]
+            to_block = BlockNumber(to_block - blocks_range - 1)
+        return None
 
 
 class VaultEncoder:
@@ -86,8 +109,25 @@ class MulticallContract(ContractWrapper):
         return HexStr(tx_hash.hex())
 
 
+class KeeperContract(ContractWrapper):
+    async def can_harvest(
+        self, vault: ChecksumAddress, block_number: BlockNumber | None = None
+    ) -> bool:
+        return await self.contract.functions.canHarvest(vault).call(block_identifier=block_number)
+
+    async def rewards_nonce(self) -> int:
+        return await self.contract.functions.rewardsNonce().call()
+
+
 multicall_contract = MulticallContract(
     abi_path='abi/Multicall.json',
     address=network_config.MULTICALL_CONTRACT_ADDRESS,
+    client=execution_client,
+)
+
+
+keeper_contract = KeeperContract(
+    abi_path='abi/IKeeper.json',
+    address=network_config.KEEPER_CONTRACT_ADDRESS,
     client=execution_client,
 )

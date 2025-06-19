@@ -4,13 +4,13 @@ from eth_typing import ChecksumAddress, HexStr
 from web3 import Web3
 from web3.types import BlockNumber
 
-from periodic_tasks.common.contracts import multicall_contract
+from periodic_tasks.common.contracts import keeper_contract, multicall_contract
 from periodic_tasks.common.execution import transaction_gas_wrapper
 from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
 from periodic_tasks.common.typings import HarvestParams
 
 from .clients import execution_client
-from .contracts import keeper_contract, leverage_strategy_contract
+from .contracts import leverage_strategy_contract
 from .typings import ExitRequest
 
 logger = logging.getLogger(__name__)
