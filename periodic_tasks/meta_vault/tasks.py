@@ -10,7 +10,7 @@ from periodic_tasks.common.contracts import VaultContract, multicall_contract
 from periodic_tasks.common.execution import wait_for_tx_confirmation
 from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
-from periodic_tasks.common.settings import NETWORK
+from periodic_tasks.common.settings import NETWORK, network_config
 from periodic_tasks.common.typings import Vault
 from periodic_tasks.exit.graph import graph_get_exit_requests_by_vaults
 from periodic_tasks.meta_vault.contracts import MetaVaultContract
@@ -96,17 +96,32 @@ async def meta_vault_update_state(
 
     # Claim sub vaults exited assets
     if sub_vault_exit_requests:
+        logger.info(
+            'Meta vault has %d sub vault exit requests to claim',
+            len(sub_vault_exit_requests),
+        )
         calls.append(
             (
                 meta_vault.address,
                 meta_vault_encoder.claim_sub_vaults_exited_assets(sub_vault_exit_requests),
             )
         )
+    else:
+        logger.info('No sub vault exit requests to claim for meta vault')
 
     # Update meta vault state
+    # todo: check meta vault rewards nonce
     calls.append((meta_vault.address, meta_vault_encoder.update_state(meta_vault.harvest_params)))
 
+    if not calls:
+        logger.info('No changes in sub vaults. State update for meta vault will be skipped.')
+        return
+
     # Submit the transaction
+    logger.info(
+        'Submitting transaction to update state for meta vault %s',
+        meta_vault.address,
+    )
     tx_hash = await multicall_contract.tx_aggregate(calls)
 
     logger.info('Waiting for transaction %s confirmation', tx_hash)
@@ -123,9 +138,10 @@ async def process_deposit_to_sub_vaults(meta_vault_address: ChecksumAddress) -> 
     withdrawable_assets = await meta_vault_contract.withdrawable_assets()
 
     logger.info(
-        'Meta vault %s has withdrawable assets: %s',
+        'Meta vault %s has withdrawable assets: %.2f %s',
         meta_vault_address,
         Web3.from_wei(withdrawable_assets, 'ether'),
+        network_config.VAULT_BALANCE_UNIT,
     )
 
     if NETWORK in GNO_NETWORKS:

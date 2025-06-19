@@ -68,6 +68,7 @@ class NetworkConfig(BaseNetworkConfig):
     LEVERAGE_STRATEGY_CONTRACT_ADDRESS: ChecksumAddress
     STRATEGY_REGISTRY_CONTRACT_ADDRESS: ChecksumAddress
     OSTOKEN_ESCROW_CONTRACT_ADDRESS: ChecksumAddress
+    VAULT_BALANCE_UNIT: str
 
 
 NETWORKS: dict[str, NetworkConfig] = {
@@ -85,6 +86,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x09e84205DF7c68907e619D07aFD90143c5763605'
         ),
+        VAULT_BALANCE_UNIT='ETH',
     ),
     HOODI: NetworkConfig(
         **asdict(BASE_NETWORKS[HOODI]),
@@ -100,6 +102,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xdC1347cC04d4a8945b98A09C3c5585286bbA5C2B'
         ),
+        VAULT_BALANCE_UNIT='ETH',
     ),
     GNOSIS: NetworkConfig(
         **asdict(BASE_NETWORKS[GNOSIS]),
@@ -109,6 +112,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        VAULT_BALANCE_UNIT='mGNO',
     ),
     CHIADO: NetworkConfig(
         **asdict(BASE_NETWORKS[CHIADO]),
@@ -118,5 +122,6 @@ NETWORKS: dict[str, NetworkConfig] = {
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         OSTOKEN_ESCROW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        VAULT_BALANCE_UNIT='mGNO',
     ),
 }

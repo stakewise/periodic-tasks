@@ -59,17 +59,28 @@ async def graph_get_vaults(
 
         can_harvest = vault_item['canHarvest']
 
+        # rewardsRoot
         if vault_item['rewardsRoot'] is None:
-            # Create empty harvest params
             rewards_root = HexBytes(b'\x00' * 32)
+        else:
+            rewards_root = HexBytes(Web3.to_bytes(hexstr=vault_item['rewardsRoot']))
+
+        # proofReward
+        if vault_item['proofReward'] is None:
             proof_reward = Wei(0)
+        else:
+            proof_reward = Wei(int(vault_item['proofReward']))
+
+        # proofUnlockedMevReward
+        if vault_item['proofUnlockedMevReward'] is None:
             proof_unlocked_mev_reward = Wei(0)
+        else:
+            proof_unlocked_mev_reward = Wei(int(vault_item['proofUnlockedMevReward']))
+
+        # proof
+        if vault_item['proof'] is None:
             proof = []
         else:
-            # Create normal harvest params
-            rewards_root = HexBytes(Web3.to_bytes(hexstr=vault_item['rewardsRoot']))
-            proof_reward = Wei(int(vault_item['proofReward']))
-            proof_unlocked_mev_reward = Wei(int(vault_item['proofUnlockedMevReward']))
             proof = [HexBytes(Web3.to_bytes(hexstr=p)) for p in vault_item['proof']]
 
         graph_vaults_map[vault_address] = Vault(
