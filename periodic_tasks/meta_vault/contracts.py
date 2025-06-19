@@ -11,7 +11,7 @@ class MetaVaultContract(ContractWrapper):
     async def withdrawable_assets(self) -> Wei:
         return await self.contract.functions.withdrawableAssets().call()
 
-    async def deposit_to_subvaults(self) -> HexStr:
+    async def deposit_to_sub_vaults(self) -> HexStr:
         tx_hash = await self.contract.functions.depositToSubVaults().transact()
         return Web3.to_hex(tx_hash)
 

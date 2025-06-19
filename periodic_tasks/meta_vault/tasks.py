@@ -14,7 +14,7 @@ from periodic_tasks.common.settings import NETWORK
 from periodic_tasks.common.typings import Vault
 from periodic_tasks.exit.graph import graph_get_exit_requests_by_vaults
 from periodic_tasks.meta_vault.contracts import MetaVaultContract
-from periodic_tasks.meta_vault.graph import graph_get_metavaults
+from periodic_tasks.meta_vault.graph import graph_get_meta_vaults
 from periodic_tasks.meta_vault.typings import SubVaultExitRequest
 
 from . import settings
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 async def process_all_meta_vaults(block_number: BlockNumber) -> None:
-    meta_vaults_map = await graph_get_metavaults(settings.META_VAULTS)
+    meta_vaults_map = await graph_get_meta_vaults(settings.META_VAULTS)
 
     for meta_vault_address, meta_vault in meta_vaults_map.items():
         logger.info('Processing meta vault: %s', meta_vault_address)
@@ -32,7 +32,7 @@ async def process_all_meta_vaults(block_number: BlockNumber) -> None:
             meta_vault=meta_vault,
             block_number=block_number,
         )
-        await process_deposit_to_subvaults(meta_vault_address=meta_vault_address)
+        await process_deposit_to_sub_vaults(meta_vault_address=meta_vault_address)
 
 
 async def meta_vault_update_state(
@@ -59,6 +59,7 @@ async def meta_vault_update_state(
         if not sub_vault.can_harvest:
             continue
 
+        logger.info('Sub vault %s is harvestable', sub_vault.address)
         sub_vaults_to_harvest.append(sub_vault.address)
         calls.append(
             (
@@ -70,12 +71,11 @@ async def meta_vault_update_state(
         )
 
     if not sub_vaults_to_harvest:
-        logger.info('No harvestable subvaults for meta vault %s', meta_vault.address)
-        return
+        logger.info('No harvestable sub vaults for meta vault %s', meta_vault.address)
 
     # Collect exit requests for the sub vaults
     vault_to_exit_requests = await graph_get_exit_requests_by_vaults(
-        vaults=sub_vaults_to_harvest,
+        vaults=meta_vault.sub_vaults,
         block_number=block_number,
     )
     sub_vault_exit_requests: list[SubVaultExitRequest] = []
@@ -114,7 +114,7 @@ async def meta_vault_update_state(
     logger.info('Transaction %s confirmed', tx_hash)
 
 
-async def process_deposit_to_subvaults(meta_vault_address: ChecksumAddress) -> None:
+async def process_deposit_to_sub_vaults(meta_vault_address: ChecksumAddress) -> None:
     meta_vault_contract = MetaVaultContract(
         abi_path='abi/IEthMetaVault.json',
         address=meta_vault_address,
@@ -134,8 +134,8 @@ async def process_deposit_to_subvaults(meta_vault_address: ChecksumAddress) -> N
     if withdrawable_assets < settings.META_VAULT_MIN_DEPOSIT_AMOUNT:
         return
 
-    logger.info('Depositing to subvaults for meta vault %s', meta_vault_address)
-    tx_hash = await meta_vault_contract.deposit_to_subvaults()
+    logger.info('Depositing to sub vaults for meta vault %s', meta_vault_address)
+    tx_hash = await meta_vault_contract.deposit_to_sub_vaults()
 
     logger.info('Waiting for transaction %s confirmation', tx_hash)
     await wait_for_tx_confirmation(execution_client, tx_hash)

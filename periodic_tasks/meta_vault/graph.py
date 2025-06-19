@@ -6,7 +6,7 @@ from periodic_tasks.common.typings import Vault
 from .clients import graph_client
 
 
-async def graph_get_metavaults(
+async def graph_get_meta_vaults(
     meta_vault_addresses: list[ChecksumAddress],
 ) -> dict[ChecksumAddress, Vault]:
     vaults = await graph_get_vaults(

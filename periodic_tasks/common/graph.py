@@ -54,7 +54,7 @@ async def graph_get_vaults(
         is_meta_vault = vault_item['isMetaVault']
 
         sub_vaults = [
-            Web3.to_checksum_address(subvault['subVault']) for subvault in vault_item['subVaults']
+            Web3.to_checksum_address(sub_vault['subVault']) for sub_vault in vault_item['subVaults']
         ]
 
         can_harvest = vault_item['canHarvest']
