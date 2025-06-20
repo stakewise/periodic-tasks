@@ -25,3 +25,9 @@ PRIORITY_FEE_PERCENTILE: float = config('PRIORITY_FEE_PERCENTILE', default=80.0,
 
 NETWORK = config('NETWORK')
 network_config = NETWORKS[NETWORK]
+
+EVENTS_BLOCKS_RANGE_INTERVAL = config(
+    'EVENTS_BLOCKS_RANGE_INTERVAL',
+    default=43200 // network_config.SECONDS_PER_BLOCK,  # 12 hrs
+    cast=int,
+)
