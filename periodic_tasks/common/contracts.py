@@ -15,17 +15,19 @@ logger = logging.getLogger(__name__)
 
 
 class ContractWrapper:
-    def __init__(self, abi_path: str, address: ChecksumAddress, client: AsyncWeb3):
-        self.address = address
-        self.contract = client.eth.contract(address=address, abi=self._load_abi(abi_path))
+    abi_path: str
 
-    def _load_abi(self, abi_path: str) -> dict:
+    def __init__(self, address: ChecksumAddress, client: AsyncWeb3):
+        self.address = address
+        self.contract = client.eth.contract(address=address, abi=self._load_abi())
+
+    def _load_abi(self) -> dict:
         # get subclass file path
         file = sys.modules[self.__class__.__module__].__file__
         if not file:
             raise IndexError("Can't get abi file path")
         current_dir = Path(file).parent
-        with (current_dir / abi_path).open(encoding='utf-8') as f:
+        with (current_dir / self.abi_path).open(encoding='utf-8') as f:
             return json.load(f)
 
     @property

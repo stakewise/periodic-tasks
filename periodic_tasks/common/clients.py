@@ -15,10 +15,11 @@ def get_execution_client(endpoint: str = EXECUTION_ENDPOINT) -> AsyncWeb3:
     return client
 
 
-async def setup_execution_client(w3: AsyncWeb3, account: LocalAccount) -> None:
+async def setup_execution_client(client: AsyncWeb3, account: LocalAccount) -> AsyncWeb3:
     """Setup Web3 private key"""
-    w3.middleware_onion.add(await async_construct_sign_and_send_raw_middleware(account))
-    w3.eth.default_account = account.address
+    client.middleware_onion.add(await async_construct_sign_and_send_raw_middleware(account))
+    client.eth.default_account = account.address
+    return client
 
 
 def get_hot_wallet_account(private_key: str | None) -> LocalAccount | None:
