@@ -45,8 +45,18 @@ class MetaVaultEncoder:
     def claim_sub_vaults_exited_assets(
         self, sub_vault_exit_requests: list[SubVaultExitRequest]
     ) -> HexStr:
+        exit_requests_arg: list[tuple] = []
+
+        for request in sub_vault_exit_requests:
+            exit_requests_arg.append(
+                (
+                    request.exit_queue_index,
+                    request.vault,
+                    request.timestamp,
+                )
+            )
         return self.contract.encode_abi(
-            fn_name='claimSubVaultsExitedAssets', args=sub_vault_exit_requests
+            fn_name='claimSubVaultsExitedAssets', args=[exit_requests_arg]
         )
 
     def update_state(self, harvest_params: HarvestParams) -> HexStr:
