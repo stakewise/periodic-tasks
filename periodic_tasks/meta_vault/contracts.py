@@ -7,7 +7,6 @@ from web3.contract.async_contract import AsyncContractEvent
 from web3.types import EventData, Wei
 
 from periodic_tasks.common.contracts import ContractWrapper
-from periodic_tasks.common.settings import network_config
 from periodic_tasks.common.typings import HarvestParams
 from periodic_tasks.meta_vault.typings import SubVaultExitRequest
 
@@ -24,27 +23,6 @@ class MetaVaultContract(ContractWrapper):
 
     def encoder(self) -> 'MetaVaultEncoder':
         return MetaVaultEncoder(self)
-
-    async def rewards_nonce(self, block_number: BlockNumber) -> int | None:
-        """
-        Returns the current rewards nonce of the contract.
-        We can't read the value directly because it is stored in private attribute.
-        Find the value from the latest RewardsNonceUpdated event.
-        """
-        blocks_range = 3600 * 24 * 2 // network_config.SECONDS_PER_BLOCK  # 2 days
-        to_block = block_number
-        from_block = BlockNumber(max(0, block_number - blocks_range))
-
-        event = await self.get_last_rewards_nonce_updated_event(
-            from_block=from_block,
-            to_block=to_block,
-        )
-        if event is None:
-            logger.warning(
-                'No RewardsNonceUpdated event found in the last 2 days for block %s',
-                block_number,
-            )
-        return event['args']['rewardsNonce'] if event else None
 
     async def get_last_rewards_nonce_updated_event(
         self, from_block: BlockNumber, to_block: BlockNumber

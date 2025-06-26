@@ -2,6 +2,7 @@ import json
 import logging
 import sys
 from pathlib import Path
+from typing import cast
 
 from hexbytes import HexBytes
 from web3 import AsyncWeb3
@@ -115,8 +116,14 @@ class KeeperContract(ContractWrapper):
     ) -> bool:
         return await self.contract.functions.canHarvest(vault).call(block_identifier=block_number)
 
-    async def rewards_nonce(self) -> int:
-        return await self.contract.functions.rewardsNonce().call()
+    async def get_last_rewards_updated_event(
+        self, from_block: BlockNumber, to_block: BlockNumber
+    ) -> EventData | None:
+        return await self._get_last_event(
+            cast(type[AsyncContractEvent], self.contract.events.RewardsUpdated),
+            from_block=from_block,
+            to_block=to_block,
+        )
 
 
 multicall_contract = MulticallContract(

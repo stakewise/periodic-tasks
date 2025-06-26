@@ -27,7 +27,7 @@ from .clients import graph_client
 logger = logging.getLogger(__name__)
 
 
-async def process_all_meta_vaults(block_number: BlockNumber) -> None:
+async def process_meta_vaults(block_number: BlockNumber) -> None:
     meta_vaults_map = await graph_get_meta_vaults(settings.META_VAULTS)
 
     for meta_vault_address, meta_vault in meta_vaults_map.items():
@@ -77,18 +77,11 @@ async def meta_vault_update_state(
     if not sub_vaults_to_harvest:
         logger.info('No harvestable sub vaults for meta vault %s', meta_vault.address)
 
-    # Collect exit requests for the sub vaults
-    vault_to_exit_requests = await graph_get_exit_requests_by_vaults(
-        vaults=meta_vault.sub_vaults,
+    # Collect claimable exit requests for the sub vaults
+    sub_vault_exit_requests = await get_claimable_sub_vault_exit_requests(
+        sub_vaults=meta_vault.sub_vaults,
         block_number=block_number,
     )
-    sub_vault_exit_requests: list[SubVaultExitRequest] = []
-
-    for exit_requests in vault_to_exit_requests.values():
-        for exit_request in exit_requests:
-            if not exit_request.is_claimable:
-                continue
-            sub_vault_exit_requests.append(SubVaultExitRequest.from_exit_request(exit_request))
 
     # Meta vault contract
     meta_vault_contract = MetaVaultContract(
@@ -140,25 +133,56 @@ async def meta_vault_update_state(
     logger.info('Transaction %s confirmed', tx_hash)
 
 
+async def get_claimable_sub_vault_exit_requests(
+    sub_vaults: list[ChecksumAddress],
+    block_number: BlockNumber,
+) -> list[SubVaultExitRequest]:
+    """
+    Get claimable exit requests for the given sub vaults.
+    """
+    vault_to_exit_requests = await graph_get_exit_requests_by_vaults(
+        vaults=sub_vaults,
+        block_number=block_number,
+    )
+
+    claimable_exit_requests: list[SubVaultExitRequest] = []
+
+    for exit_requests in vault_to_exit_requests.values():
+        for exit_request in exit_requests:
+            if not exit_request.is_claimable:
+                continue
+            claimable_exit_requests.append(SubVaultExitRequest.from_exit_request(exit_request))
+
+    return claimable_exit_requests
+
+
 async def is_meta_vault_rewards_nonce_outdated(
     meta_vault_contract: MetaVaultContract,
     block_number: BlockNumber,
 ) -> bool:
     """
     Check if the meta vault rewards nonce is outdated compared to the keeper contract.
+    We can't read the rewards nonce from meta vault directly
+    because it is stored in private attribute.
+    Solution: compare events.
     """
-    meta_vault_rewards_nonce = await meta_vault_contract.rewards_nonce(block_number=block_number)
+    # Find the last rewards updated event in the Keeper contract
+    keeper_event = await keeper_contract.get_last_rewards_updated_event(
+        from_block=network_config.KEEPER_GENESIS_BLOCK,
+        to_block=block_number,
+    )
+    if keeper_event is None:
+        logger.info('No RewardsUpdated event found in the Keeper contract')
+        return False
 
-    if meta_vault_rewards_nonce is None:
-        # Event not found, consider rewards nonce is outdated
-        return True
+    # Find the last rewards nonce updated event in the meta vault contract
+    # since the last Keeper vote
+    meta_vault_event = await meta_vault_contract.get_last_rewards_nonce_updated_event(
+        from_block=BlockNumber(keeper_event['blockNumber'] + 1),
+        to_block=block_number,
+    )
 
-    keeper_rewards_nonce = await keeper_contract.rewards_nonce()
-
-    if meta_vault_rewards_nonce < keeper_rewards_nonce:
-        return True
-
-    return False
+    return meta_vault_event is not None
 
 
 async def process_deposit_to_sub_vaults(meta_vault_address: ChecksumAddress) -> None:
