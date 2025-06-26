@@ -1,14 +1,16 @@
 import asyncio
 import logging
 
+from eth_typing import HexStr
 from hexbytes import HexBytes
 from sw_utils import GasManager
-from web3 import AsyncWeb3
+from web3 import AsyncWeb3, Web3
 from web3.contract.async_contract import AsyncContractFunction
 from web3.types import TxParams
 
 from periodic_tasks.common.settings import (
     ATTEMPTS_WITH_DEFAULT_GAS,
+    EXECUTION_TRANSACTION_TIMEOUT,
     MAX_FEE_PER_GAS_GWEI,
     PRIORITY_FEE_NUM_BLOCKS,
     PRIORITY_FEE_PERCENTILE,
@@ -53,3 +55,16 @@ async def transaction_gas_wrapper(
     # use high priority fee
     tx_params = tx_params | await gas_manager.get_high_priority_tx_params()
     return await tx_function.transact(tx_params)
+
+
+async def wait_for_tx_confirmation(execution_client: AsyncWeb3, tx_hash: HexStr) -> None:
+    """
+    Raises exception if tx was not included to block or if tx was reverted.
+    """
+    tx_receipt = await execution_client.eth.wait_for_transaction_receipt(
+        HexBytes(Web3.to_bytes(hexstr=tx_hash)), timeout=EXECUTION_TRANSACTION_TIMEOUT
+    )
+    if not tx_receipt['status']:
+        raise RuntimeError(
+            f'Failed to confirm tx: {tx_hash}',
+        )
