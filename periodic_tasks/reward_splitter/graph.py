@@ -88,6 +88,9 @@ async def graph_get_claimable_exit_requests(
                 receiver
                 totalAssets
                 exitedAssets
+                vault {
+                  id
+                }
             }
         }
     '''

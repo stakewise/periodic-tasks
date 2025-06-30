@@ -16,11 +16,17 @@ class HarvestParams:
 @dataclass
 class Vault:
     address: ChecksumAddress
+
+    # harvest params
     can_harvest: bool
     rewards_root: HexBytes
     proof_reward: Wei
     proof_unlocked_mev_reward: Wei
     proof: list[HexBytes]
+
+    # meta vaults
+    is_meta_vault: bool
+    sub_vaults: list[ChecksumAddress]
 
     @property
     def harvest_params(self) -> HarvestParams:

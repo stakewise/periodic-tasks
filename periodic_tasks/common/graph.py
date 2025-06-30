@@ -27,6 +27,10 @@ async def graph_get_vaults(
           }
         ) {
           id
+          isMetaVault
+          subVaults {
+            subVault
+          }
           canHarvest
           proof
           proofReward
@@ -47,15 +51,42 @@ async def graph_get_vaults(
 
     for vault_item in vault_data:
         vault_address = Web3.to_checksum_address(vault_item['id'])
+        is_meta_vault = vault_item['isMetaVault']
+
+        sub_vaults = [
+            Web3.to_checksum_address(sub_vault['subVault']) for sub_vault in vault_item['subVaults']
+        ]
 
         can_harvest = vault_item['canHarvest']
-        rewards_root = HexBytes(Web3.to_bytes(hexstr=vault_item['rewardsRoot']))
-        proof_reward = Wei(int(vault_item['proofReward']))
-        proof_unlocked_mev_reward = Wei(int(vault_item['proofUnlockedMevReward']))
-        proof = [HexBytes(Web3.to_bytes(hexstr=p)) for p in vault_item['proof']]
+
+        # rewardsRoot
+        if vault_item['rewardsRoot'] is None:
+            rewards_root = HexBytes(b'\x00' * 32)
+        else:
+            rewards_root = HexBytes(Web3.to_bytes(hexstr=vault_item['rewardsRoot']))
+
+        # proofReward
+        if vault_item['proofReward'] is None:
+            proof_reward = Wei(0)
+        else:
+            proof_reward = Wei(int(vault_item['proofReward']))
+
+        # proofUnlockedMevReward
+        if vault_item['proofUnlockedMevReward'] is None:
+            proof_unlocked_mev_reward = Wei(0)
+        else:
+            proof_unlocked_mev_reward = Wei(int(vault_item['proofUnlockedMevReward']))
+
+        # proof
+        if vault_item['proof'] is None:
+            proof = []
+        else:
+            proof = [HexBytes(Web3.to_bytes(hexstr=p)) for p in vault_item['proof']]
 
         graph_vaults_map[vault_address] = Vault(
             address=vault_address,
+            is_meta_vault=is_meta_vault,
+            sub_vaults=sub_vaults,
             can_harvest=can_harvest,
             rewards_root=rewards_root,
             proof_reward=proof_reward,
