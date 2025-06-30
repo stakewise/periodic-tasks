@@ -208,7 +208,7 @@ async def graph_get_exit_requests_by_ids(
     return result
 
 
-async def graph_get_exit_requests_by_vaults(
+async def graph_get_claimable_exit_requests_by_vaults(
     vaults: list[ChecksumAddress], block_number: BlockNumber
 ) -> dict[ChecksumAddress, list[ExitRequest]]:
     query = gql(
@@ -216,7 +216,7 @@ async def graph_get_exit_requests_by_vaults(
         query exitRequestQuery($vaults: [String], $block: Int, $first: Int, $skip: Int) {
           exitRequests(
             block: { number: $block },
-            where: { vault_in: $vaults },
+            where: { vault_in: $vaults, isClaimable: true },
             orderBy: id,
             first: $first,
             skip: $skip

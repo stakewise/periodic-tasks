@@ -16,7 +16,7 @@ from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.settings import NETWORK, network_config
 from periodic_tasks.common.typings import Vault
-from periodic_tasks.exit.graph import graph_get_exit_requests_by_vaults
+from periodic_tasks.exit.graph import graph_get_claimable_exit_requests_by_vaults
 from periodic_tasks.meta_vault.contracts import MetaVaultContract
 from periodic_tasks.meta_vault.graph import graph_get_meta_vaults
 from periodic_tasks.meta_vault.typings import SubVaultExitRequest
@@ -140,17 +140,14 @@ async def get_claimable_sub_vault_exit_requests(
     """
     Get claimable exit requests for the given sub vaults.
     """
-    vault_to_exit_requests = await graph_get_exit_requests_by_vaults(
+    vault_to_exit_requests = await graph_get_claimable_exit_requests_by_vaults(
         vaults=sub_vaults,
         block_number=block_number,
     )
 
     claimable_exit_requests: list[SubVaultExitRequest] = []
-
     for exit_requests in vault_to_exit_requests.values():
         for exit_request in exit_requests:
-            if not exit_request.is_claimable:
-                continue
             claimable_exit_requests.append(SubVaultExitRequest.from_exit_request(exit_request))
 
     return claimable_exit_requests
