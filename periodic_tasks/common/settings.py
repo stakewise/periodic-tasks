@@ -1,4 +1,6 @@
 from decouple import config
+from web3 import Web3
+from web3.types import Gwei, Wei
 
 from periodic_tasks.common.networks import NETWORKS
 
@@ -19,7 +21,8 @@ METRICS_REFRESH_INTERNAL: int = config('METRICS_REFRESH_INTERNAL', default=60 * 
 
 # gas settings
 ATTEMPTS_WITH_DEFAULT_GAS: int = config('ATTEMPTS_WITH_DEFAULT_GAS', default=3, cast=int)
-MAX_FEE_PER_GAS_GWEI: int = config('MAX_FEE_PER_GAS_GWEI', default=100, cast=int)
+MAX_FEE_PER_GAS_GWEI: Gwei = config('MAX_FEE_PER_GAS_GWEI', default=100, cast=int)
+MAX_FEE_PER_GAS: Wei = Web3.to_wei(MAX_FEE_PER_GAS_GWEI, 'gwei')
 PRIORITY_FEE_NUM_BLOCKS: int = config('PRIORITY_FEE_NUM_BLOCKS', default=10, cast=int)
 PRIORITY_FEE_PERCENTILE: float = config('PRIORITY_FEE_PERCENTILE', default=80.0, cast=float)
 
