@@ -11,7 +11,7 @@ from web3.types import TxParams
 from periodic_tasks.common.settings import (
     ATTEMPTS_WITH_DEFAULT_GAS,
     EXECUTION_TRANSACTION_TIMEOUT,
-    MAX_FEE_PER_GAS_GWEI,
+    MAX_FEE_PER_GAS,
     PRIORITY_FEE_NUM_BLOCKS,
     PRIORITY_FEE_PERCENTILE,
     network_config,
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def build_gas_manager(execution_client: AsyncWeb3) -> GasManager:
     return GasManager(
         execution_client=execution_client,
-        max_fee_per_gas_gwei=MAX_FEE_PER_GAS_GWEI,
+        max_fee_per_gas=MAX_FEE_PER_GAS,
         priority_fee_num_blocks=PRIORITY_FEE_NUM_BLOCKS,
         priority_fee_percentile=PRIORITY_FEE_PERCENTILE,
     )
