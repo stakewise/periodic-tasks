@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from decouple import config
 from eth_typing import ChecksumAddress
 from web3 import Web3
@@ -16,10 +18,11 @@ META_VAULTS: list[ChecksumAddress] = config(
 MIN_ACTIVATION_BALANCE = Web3.to_wei(32, 'ether')
 
 
-# Allow users to specify a custom minimum deposit amount in ETH (GNO).
-# The value is then converted from ETH to Wei.
-META_VAULT_MIN_DEPOSIT_AMOUNT: Wei = config(
-    'META_VAULT_MIN_DEPOSIT_AMOUNT',
+# User may specify a custom minimum deposit amount in ETH (mGNO).
+META_VAULT_MIN_DEPOSIT_AMOUNT_ETH: Decimal = config(
+    'META_VAULT_MIN_DEPOSIT_AMOUNT_ETH',
     default=Web3.from_wei(MIN_ACTIVATION_BALANCE, 'ether'),
-    cast=lambda x: Web3.to_wei(x, 'ether'),
+    cast=Decimal,
 )
+# Convert minimal deposit amount from ETH to Wei.
+META_VAULT_MIN_DEPOSIT_AMOUNT: Wei = Web3.to_wei(META_VAULT_MIN_DEPOSIT_AMOUNT_ETH, 'ether')
