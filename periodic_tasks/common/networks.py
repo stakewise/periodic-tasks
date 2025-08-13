@@ -78,7 +78,7 @@ NETWORKS: dict[str, NetworkConfig] = {
             '0xe0Ae8B04922d6e3fA06c2496A94EF2875EFcC7BB'
         ),
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0x48cD14FDB8e72A03C8D952af081DBB127D6281fc'
+            '0xA3bdb3a57626900E4Dd9cC1C2c07bA60F4A44Fbc'
         ),
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x90b82E4b3aa385B4A02B7EBc1892a4BeD6B5c465'
@@ -94,7 +94,7 @@ NETWORKS: dict[str, NetworkConfig] = {
             '0xcF619F9Dd8eB483239de953251fd13cB0F977c6C'
         ),
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0x154628AC72533aad39aBdcaE2055Dced0b4Eef4D'
+            '0x6A2911F94da08Da01158d645Bf85152b338E015D'
         ),
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x6A2911F94da08Da01158d645Bf85152b338E015D'
