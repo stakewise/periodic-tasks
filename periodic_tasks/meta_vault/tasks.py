@@ -43,6 +43,10 @@ async def meta_vault_tree_update_state(
     root_meta_vault: Vault,
     meta_vaults_map: dict[ChecksumAddress, Vault],
 ) -> None:
+    """
+    Update the state for the root meta vault and all its sub vaults.
+    Sub vaults may themselves be meta vaults, so the update traverses the entire meta vault tree.
+    """
     calls = await _get_meta_vault_tree_update_state_calls(
         root_meta_vault=root_meta_vault,
         meta_vaults_map=meta_vaults_map,
@@ -67,6 +71,9 @@ async def _get_meta_vault_tree_update_state_calls(
     root_meta_vault: Vault,
     meta_vaults_map: dict[ChecksumAddress, Vault],
 ) -> list[tuple[ChecksumAddress, HexStr]]:
+    """
+    Traverses meta vault tree and collects state update calls.
+    """
     stack = [root_meta_vault.address]
     calls: list[tuple[ChecksumAddress, HexStr]] = []
 
@@ -97,6 +104,10 @@ async def _get_meta_vault_tree_update_state_calls(
 async def _get_meta_vault_update_state_calls(
     meta_vault: Vault,
 ) -> list[tuple[ChecksumAddress, HexStr]]:
+    """
+    Get state update calls for a single meta vault and its sub vaults.
+    Do not follow multi vaults among sub vaults.
+    """
     # Get sub vaults
     sub_vaults = await graph_get_vaults(
         graph_client=graph_client,
