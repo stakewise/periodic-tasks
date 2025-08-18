@@ -32,17 +32,76 @@ async def process_meta_vaults(block_number: BlockNumber) -> None:
 
     for meta_vault_address, meta_vault in meta_vaults_map.items():
         logger.info('Processing meta vault: %s', meta_vault_address)
-        await meta_vault_update_state(
-            meta_vault=meta_vault,
+        await meta_vault_tree_update_state(
+            root_meta_vault=meta_vault,
+            meta_vaults_map=meta_vaults_map,
             block_number=block_number,
         )
         await process_deposit_to_sub_vaults(meta_vault_address=meta_vault_address)
 
 
-async def meta_vault_update_state(
-    meta_vault: Vault,
+async def meta_vault_tree_update_state(
+    root_meta_vault: Vault,
+    meta_vaults_map: dict[ChecksumAddress, Vault],
     block_number: BlockNumber,
 ) -> None:
+    calls = await _get_meta_vault_tree_update_state_calls(
+        root_meta_vault=root_meta_vault,
+        meta_vaults_map=meta_vaults_map,
+        block_number=block_number,
+    )
+    if not calls:
+        logger.info('Meta vault state is up-to-date, no updates needed')
+        return
+
+    # Submit the transaction
+    logger.info(
+        'Submitting transaction to update state for meta vault tree %s',
+        root_meta_vault.address,
+    )
+    tx_hash = await multicall_contract.tx_aggregate(calls)
+
+    logger.info('Waiting for transaction %s confirmation', tx_hash)
+    await wait_for_tx_confirmation(execution_client, tx_hash)
+    logger.info('Transaction %s confirmed', tx_hash)
+
+
+async def _get_meta_vault_tree_update_state_calls(
+    root_meta_vault: Vault,
+    meta_vaults_map: dict[ChecksumAddress, Vault],
+    block_number: BlockNumber,
+) -> list[tuple[ChecksumAddress, HexStr]]:
+    stack = [root_meta_vault.address]
+    calls: list[tuple[ChecksumAddress, HexStr]] = []
+
+    while stack:
+        # Take the last meta vault
+        meta_vault_address = stack.pop()
+        meta_vault = meta_vaults_map[meta_vault_address]
+
+        # Get calls for a single meta vault
+        # not following multi vaults among sub vaults
+        meta_vault_calls = await _get_meta_vault_update_state_calls(
+            meta_vault=meta_vault,
+            block_number=block_number,
+        )
+
+        # Insert new calls at the start
+        calls = meta_vault_calls + calls
+
+        # Find meta vaults among sub vaults
+        meta_sub_vaults = [
+            sub_vault for sub_vault in meta_vault.sub_vaults if sub_vault in meta_vaults_map
+        ]
+        # Continue with the next level of sub vaults
+        stack.extend(meta_sub_vaults)
+
+    return calls
+
+
+async def _get_meta_vault_update_state_calls(
+    meta_vault: Vault, block_number: BlockNumber
+) -> list[tuple[ChecksumAddress, HexStr]]:
     # Get sub vaults
     sub_vaults = await graph_get_vaults(
         graph_client=graph_client,
@@ -116,21 +175,7 @@ async def meta_vault_update_state(
         calls.append(
             (meta_vault.address, meta_vault_encoder.update_state(meta_vault.harvest_params))
         )
-
-    if not calls:
-        logger.info('Meta vault state is up-to-date, no updates needed')
-        return
-
-    # Submit the transaction
-    logger.info(
-        'Submitting transaction to update state for meta vault %s',
-        meta_vault.address,
-    )
-    tx_hash = await multicall_contract.tx_aggregate(calls)
-
-    logger.info('Waiting for transaction %s confirmation', tx_hash)
-    await wait_for_tx_confirmation(execution_client, tx_hash)
-    logger.info('Transaction %s confirmed', tx_hash)
+    return calls
 
 
 async def get_claimable_sub_vault_exit_requests(
