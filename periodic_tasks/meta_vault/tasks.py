@@ -27,7 +27,7 @@ from .clients import graph_client
 logger = logging.getLogger(__name__)
 
 
-async def process_meta_vaults(block_number: BlockNumber) -> None:
+async def process_meta_vaults() -> None:
     meta_vaults_map = await graph_get_meta_vaults(settings.META_VAULTS)
 
     for meta_vault_address, meta_vault in meta_vaults_map.items():
@@ -35,7 +35,6 @@ async def process_meta_vaults(block_number: BlockNumber) -> None:
         await meta_vault_tree_update_state(
             root_meta_vault=meta_vault,
             meta_vaults_map=meta_vaults_map,
-            block_number=block_number,
         )
         await process_deposit_to_sub_vaults(meta_vault_address=meta_vault_address)
 
@@ -43,12 +42,10 @@ async def process_meta_vaults(block_number: BlockNumber) -> None:
 async def meta_vault_tree_update_state(
     root_meta_vault: Vault,
     meta_vaults_map: dict[ChecksumAddress, Vault],
-    block_number: BlockNumber,
 ) -> None:
     calls = await _get_meta_vault_tree_update_state_calls(
         root_meta_vault=root_meta_vault,
         meta_vaults_map=meta_vaults_map,
-        block_number=block_number,
     )
     if not calls:
         logger.info('Meta vault state is up-to-date, no updates needed')
@@ -69,7 +66,6 @@ async def meta_vault_tree_update_state(
 async def _get_meta_vault_tree_update_state_calls(
     root_meta_vault: Vault,
     meta_vaults_map: dict[ChecksumAddress, Vault],
-    block_number: BlockNumber,
 ) -> list[tuple[ChecksumAddress, HexStr]]:
     stack = [root_meta_vault.address]
     calls: list[tuple[ChecksumAddress, HexStr]] = []
@@ -83,7 +79,6 @@ async def _get_meta_vault_tree_update_state_calls(
         # not following multi vaults among sub vaults
         meta_vault_calls = await _get_meta_vault_update_state_calls(
             meta_vault=meta_vault,
-            block_number=block_number,
         )
 
         # Insert new calls at the start
@@ -100,7 +95,7 @@ async def _get_meta_vault_tree_update_state_calls(
 
 
 async def _get_meta_vault_update_state_calls(
-    meta_vault: Vault, block_number: BlockNumber
+    meta_vault: Vault,
 ) -> list[tuple[ChecksumAddress, HexStr]]:
     # Get sub vaults
     sub_vaults = await graph_get_vaults(
@@ -139,7 +134,6 @@ async def _get_meta_vault_update_state_calls(
     # Collect claimable exit requests for the sub vaults
     sub_vault_exit_requests = await get_claimable_sub_vault_exit_requests(
         sub_vaults=meta_vault.sub_vaults,
-        block_number=block_number,
     )
 
     # Meta vault contract
@@ -168,7 +162,6 @@ async def _get_meta_vault_update_state_calls(
     # Update meta vault state
     is_rewards_nonce_outdated = await is_meta_vault_rewards_nonce_outdated(
         meta_vault_contract=meta_vault_contract,
-        block_number=block_number,
     )
 
     if sub_vaults_to_harvest or is_rewards_nonce_outdated:
@@ -180,14 +173,13 @@ async def _get_meta_vault_update_state_calls(
 
 async def get_claimable_sub_vault_exit_requests(
     sub_vaults: list[ChecksumAddress],
-    block_number: BlockNumber,
 ) -> list[SubVaultExitRequest]:
     """
     Get claimable exit requests for the given sub vaults.
     """
     vault_to_exit_requests = await graph_get_claimable_exit_requests_by_vaults(
         vaults=sub_vaults,
-        block_number=block_number,
+        block_number=await execution_client.eth.get_block_number(),
     )
 
     claimable_exit_requests: list[SubVaultExitRequest] = []
@@ -200,7 +192,6 @@ async def get_claimable_sub_vault_exit_requests(
 
 async def is_meta_vault_rewards_nonce_outdated(
     meta_vault_contract: MetaVaultContract,
-    block_number: BlockNumber,
 ) -> bool:
     """
     Check if the meta vault rewards nonce is outdated compared to the keeper contract.
@@ -208,10 +199,11 @@ async def is_meta_vault_rewards_nonce_outdated(
     because it is stored in private attribute.
     Solution: compare events.
     """
+    current_block = await execution_client.eth.get_block_number()
+
     # Find the last rewards updated event in the Keeper contract
     keeper_event = await keeper_contract.get_last_rewards_updated_event(
-        from_block=network_config.KEEPER_GENESIS_BLOCK,
-        to_block=block_number,
+        from_block=network_config.KEEPER_GENESIS_BLOCK, to_block=current_block
     )
     if keeper_event is None:
         logger.info('No RewardsUpdated event found in the Keeper contract')
@@ -220,8 +212,7 @@ async def is_meta_vault_rewards_nonce_outdated(
     # Find the last rewards nonce updated event in the meta vault contract
     # since the last Keeper vote
     meta_vault_event = await meta_vault_contract.get_last_rewards_nonce_updated_event(
-        from_block=BlockNumber(keeper_event['blockNumber'] + 1),
-        to_block=block_number,
+        from_block=BlockNumber(keeper_event['blockNumber'] + 1), to_block=current_block
     )
 
     return meta_vault_event is not None
