@@ -112,10 +112,9 @@ async def graph_ostoken_exit_requests(
 ) -> list[OsTokenExitRequest]:
     query = gql(
         """
-        query ExitRequestsQuery($ltv: String, $block: Int, $first: Int, $skip: Int) {
+        query ExitRequestsQuery($block: Int, $first: Int, $skip: Int) {
           osTokenExitRequests(
             block: { number: $block },
-            where: {ltv_gt: $ltv}
             first: $first
             skip: $skip
             ) {
@@ -131,7 +130,7 @@ async def graph_ostoken_exit_requests(
         }
         """
     )
-    params = {'ltv': str(ltv), 'block': block_number}
+    params = {'block': block_number}
     response = await graph_client.fetch_pages(query, params=params)
 
     if not response:

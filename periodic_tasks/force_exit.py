@@ -21,7 +21,12 @@ async def main() -> None:
 
     await setup_execution_client(execution_client, hot_wallet_account)
 
-    await force_exits()
+    while True:
+        try:
+            await force_exits()
+            await asyncio.sleep(120)
+        except Exception as e:
+            logger.exception(e)
 
 
 setup_logging()
