@@ -21,8 +21,7 @@ async def main() -> None:
 
     await setup_execution_client(execution_client, hot_wallet_account)
 
-    block = await execution_client.eth.get_block('finalized')
-    await process_meta_vaults(block_number=block['number'])
+    await process_meta_vaults()
 
 
 setup_logging()
