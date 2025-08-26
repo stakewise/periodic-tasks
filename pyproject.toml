@@ -25,6 +25,9 @@ black = { version = "==23.10.0", extras = ["d"] }
 flake8-print = "==5.0.0"
 flake8-datetimez = "==20.10.0"
 types-requests = "==2.31.0.20240311"
+pytest = "==8.4.1"
+pytest-asyncio = "==1.1.0"
+faker = "^19.11.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -87,3 +90,7 @@ exclude = ["networks.py"]
 ignore_names = [
     "default_account",  # execution client
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"

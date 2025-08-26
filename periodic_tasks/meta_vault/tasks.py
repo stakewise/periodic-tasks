@@ -29,12 +29,14 @@ logger = logging.getLogger(__name__)
 
 async def process_meta_vaults() -> None:
     meta_vaults_map = await graph_get_meta_vaults(settings.META_VAULTS)
+    vaults_updated: set[ChecksumAddress] = set()
 
     for meta_vault_address, meta_vault in meta_vaults_map.items():
         logger.info('Processing meta vault: %s', meta_vault_address)
         await meta_vault_tree_update_state(
             root_meta_vault=meta_vault,
             meta_vaults_map=meta_vaults_map,
+            vaults_updated=vaults_updated,
         )
         await process_deposit_to_sub_vaults(meta_vault_address=meta_vault_address)
 
@@ -42,6 +44,7 @@ async def process_meta_vaults() -> None:
 async def meta_vault_tree_update_state(
     root_meta_vault: Vault,
     meta_vaults_map: dict[ChecksumAddress, Vault],
+    vaults_updated: set[ChecksumAddress],
 ) -> None:
     """
     Update the state for the root meta vault and all its sub vaults.
@@ -50,9 +53,10 @@ async def meta_vault_tree_update_state(
     calls = await _get_meta_vault_tree_update_state_calls(
         root_meta_vault=root_meta_vault,
         meta_vaults_map=meta_vaults_map,
+        vaults_updated=vaults_updated,
     )
     if not calls:
-        logger.info('Meta vault state is up-to-date, no updates needed')
+        logger.info('Meta vault %s state is up-to-date, no updates needed', root_meta_vault.address)
         return
 
     # Submit the transaction
@@ -70,6 +74,7 @@ async def meta_vault_tree_update_state(
 async def _get_meta_vault_tree_update_state_calls(
     root_meta_vault: Vault,
     meta_vaults_map: dict[ChecksumAddress, Vault],
+    vaults_updated: set[ChecksumAddress],
 ) -> list[tuple[ChecksumAddress, HexStr]]:
     """
     Traverses meta vault tree and collects state update calls.
@@ -82,21 +87,36 @@ async def _get_meta_vault_tree_update_state_calls(
         meta_vault_address = stack.pop()
         meta_vault = meta_vaults_map[meta_vault_address]
 
+        if meta_vault.address in vaults_updated:
+            logger.info(
+                'Meta vault %s is already updated as a part of another meta vault tree',
+                meta_vault.address,
+            )
+            continue
+
         # Get calls for a single meta vault
         # not following multi vaults among sub vaults
         meta_vault_calls = await _get_meta_vault_update_state_calls(
             meta_vault=meta_vault,
         )
+        # Filter out already updated vaults
+        meta_vault_calls = [c for c in meta_vault_calls if c[0] not in vaults_updated]
 
         # Insert new calls at the start
         calls = meta_vault_calls + calls
 
-        # Find meta vaults among sub vaults
-        meta_sub_vaults = [
-            sub_vault for sub_vault in meta_vault.sub_vaults if sub_vault in meta_vaults_map
-        ]
-        # Continue with the next level of sub vaults
-        stack.extend(meta_sub_vaults)
+        for sub_vault in meta_vault.sub_vaults:
+            # Schedule sub vault for processing if it is meta vault
+            if sub_vault in meta_vaults_map and sub_vault not in vaults_updated:
+                stack.append(sub_vault)
+                continue
+
+            # Mark sub vault as updated
+            if sub_vault not in meta_vaults_map:
+                vaults_updated.add(sub_vault)
+
+        # Mark the root meta vault as updated
+        vaults_updated.add(meta_vault.address)
 
     return calls
 
@@ -126,6 +146,10 @@ async def _get_meta_vault_update_state_calls(
     # Filter harvestable sub vaults and prepare calls for updating their state
     for sub_vault in sub_vaults.values():
         if not sub_vault.can_harvest:
+            continue
+
+        # Handle nested meta vaults separately
+        if sub_vault.is_meta_vault:
             continue
 
         logger.info('Sub vault %s is harvestable', sub_vault.address)
