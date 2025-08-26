@@ -128,7 +128,7 @@ jobs:
 
   docker:
     name: Build Docker Image
-    needs: [pre-commit, security]
+    needs: [pre-commit, test, security]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
