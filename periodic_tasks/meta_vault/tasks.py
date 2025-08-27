@@ -95,7 +95,7 @@ async def _get_meta_vault_tree_update_state_calls(
             continue
 
         # Get calls for a single meta vault
-        # not following multi vaults among sub vaults
+        # skipping meta vaults among sub vaults.
         meta_vault_calls = await _get_meta_vault_update_state_calls(
             meta_vault=meta_vault,
         )
@@ -105,15 +105,14 @@ async def _get_meta_vault_tree_update_state_calls(
         # Insert new calls at the start
         calls = meta_vault_calls + calls
 
+        # Mark sub vaults as updated
+        vaults_updated.update({c[0] for c in meta_vault_calls})
+
+        # Schedule nested meta vaults for processing
         for sub_vault in meta_vault.sub_vaults:
-            # Schedule sub vault for processing if it is meta vault
             if sub_vault in meta_vaults_map and sub_vault not in vaults_updated:
                 stack.append(sub_vault)
                 continue
-
-            # Mark sub vault as updated
-            if sub_vault not in meta_vaults_map:
-                vaults_updated.add(sub_vault)
 
         # Mark the root meta vault as updated
         vaults_updated.add(meta_vault.address)
@@ -126,7 +125,7 @@ async def _get_meta_vault_update_state_calls(
 ) -> list[tuple[ChecksumAddress, HexStr]]:
     """
     Get state update calls for a single meta vault and its sub vaults.
-    Do not follow multi vaults among sub vaults.
+    Skips meta vaults among sub vaults.
     """
     # Get sub vaults
     sub_vaults = await graph_get_vaults(

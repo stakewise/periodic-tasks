@@ -2,10 +2,11 @@ from contextlib import contextmanager
 from unittest import mock
 
 from eth_typing import ChecksumAddress
+from sw_utils.graph import GraphClient
+
 from periodic_tasks.common.typings import Vault
 from periodic_tasks.meta_vault.tasks import _get_meta_vault_tree_update_state_calls
 from periodic_tasks.meta_vault.tests.factories import create_vault
-from sw_utils.graph import GraphClient
 
 
 class TestMetaVaultTreeUpdateStateCalls:
@@ -100,6 +101,152 @@ class TestMetaVaultTreeUpdateStateCalls:
         assert calls[0][0] == meta_vault.sub_vaults[1]
         assert calls[1][0] == meta_vault.address
         assert vaults_updated == {meta_vault.address, *meta_vault.sub_vaults}
+
+    async def test_nested_meta_vault_basic(self):
+        # Arrange
+        meta_vault = create_vault(is_meta_vault=True, sub_vaults_count=2)
+
+        # sub vault 0 is meta vault, sub vault 1 is regular vault
+        sub_vault_0 = create_vault(
+            address=meta_vault.sub_vaults[0], is_meta_vault=True, sub_vaults_count=2
+        )
+        sub_vault_1 = create_vault(address=meta_vault.sub_vaults[1])
+
+        # sub vaults of sub vault 0
+        sub_vault_2 = create_vault(address=sub_vault_0.sub_vaults[0])
+        sub_vault_3 = create_vault(address=sub_vault_0.sub_vaults[1])
+
+        meta_vaults_map = {
+            meta_vault.address: meta_vault,
+            sub_vault_0.address: sub_vault_0,
+        }
+        vaults_updated = set()
+        graph_mock = GraphMock(
+            [
+                meta_vault,
+                sub_vault_0,
+                sub_vault_1,
+                sub_vault_2,
+                sub_vault_3,
+            ]
+        )
+
+        # Act
+        with self.patch(graph_mock=graph_mock):
+            calls = await _get_meta_vault_tree_update_state_calls(
+                root_meta_vault=meta_vault,
+                meta_vaults_map=meta_vaults_map,
+                vaults_updated=vaults_updated,
+            )
+
+        # Assert
+        assert [c[0] for c in calls] == [
+            sub_vault_2.address,
+            sub_vault_3.address,
+            sub_vault_0.address,
+            sub_vault_1.address,
+            meta_vault.address,
+        ]
+        assert vaults_updated == {
+            meta_vault.address,
+            *meta_vault.sub_vaults,
+            *sub_vault_0.sub_vaults,
+        }
+
+    async def test_nested_meta_vault_already_updated(self):
+        # Arrange
+        meta_vault = create_vault(is_meta_vault=True, sub_vaults_count=2)
+
+        # sub vault 0 is meta vault, sub vault 1 is regular vault
+        sub_vault_0 = create_vault(
+            address=meta_vault.sub_vaults[0], is_meta_vault=True, sub_vaults_count=2
+        )
+        sub_vault_1 = create_vault(address=meta_vault.sub_vaults[1])
+
+        # sub vaults of sub vault 0
+        sub_vault_2 = create_vault(address=sub_vault_0.sub_vaults[0])
+        sub_vault_3 = create_vault(address=sub_vault_0.sub_vaults[1])
+
+        meta_vaults_map = {
+            meta_vault.address: meta_vault,
+            sub_vault_0.address: sub_vault_0,
+        }
+        graph_mock = GraphMock(
+            [
+                meta_vault,
+                sub_vault_0,
+                sub_vault_1,
+                sub_vault_2,
+                sub_vault_3,
+            ]
+        )
+        vaults_updated = {sub_vault_0.address, *sub_vault_0.sub_vaults}
+
+        # Act
+        with self.patch(graph_mock=graph_mock):
+            calls = await _get_meta_vault_tree_update_state_calls(
+                root_meta_vault=meta_vault,
+                meta_vaults_map=meta_vaults_map,
+                vaults_updated=vaults_updated,
+            )
+
+        # Assert
+        assert [c[0] for c in calls] == [sub_vault_1.address, meta_vault.address]
+        assert vaults_updated == {
+            meta_vault.address,
+            *meta_vault.sub_vaults,
+            *sub_vault_0.sub_vaults,
+        }
+
+    async def test_sub_vault_level_2_already_updated(self):
+        # Arrange
+        meta_vault = create_vault(is_meta_vault=True, sub_vaults_count=2)
+
+        # sub vault 0 is meta vault, sub vault 1 is regular vault
+        sub_vault_0 = create_vault(
+            address=meta_vault.sub_vaults[0], is_meta_vault=True, sub_vaults_count=2
+        )
+        sub_vault_1 = create_vault(address=meta_vault.sub_vaults[1])
+
+        # sub vaults of sub vault 0
+        sub_vault_2 = create_vault(address=sub_vault_0.sub_vaults[0])
+        sub_vault_3 = create_vault(address=sub_vault_0.sub_vaults[1])
+
+        meta_vaults_map = {
+            meta_vault.address: meta_vault,
+            sub_vault_0.address: sub_vault_0,
+        }
+        graph_mock = GraphMock(
+            [
+                meta_vault,
+                sub_vault_0,
+                sub_vault_1,
+                sub_vault_2,
+                sub_vault_3,
+            ]
+        )
+        vaults_updated = {sub_vault_2.address}
+
+        # Act
+        with self.patch(graph_mock=graph_mock):
+            calls = await _get_meta_vault_tree_update_state_calls(
+                root_meta_vault=meta_vault,
+                meta_vaults_map=meta_vaults_map,
+                vaults_updated=vaults_updated,
+            )
+
+        # Assert
+        assert [c[0] for c in calls] == [
+            sub_vault_3.address,
+            sub_vault_0.address,
+            sub_vault_1.address,
+            meta_vault.address,
+        ]
+        assert vaults_updated == {
+            meta_vault.address,
+            *meta_vault.sub_vaults,
+            *sub_vault_0.sub_vaults,
+        }
 
     @contextmanager
     def patch(self, graph_mock: 'GraphMock'):
