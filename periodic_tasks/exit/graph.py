@@ -209,13 +209,12 @@ async def graph_get_exit_requests_by_ids(
 
 
 async def graph_get_claimable_exit_requests_by_vaults(
-    vaults: list[ChecksumAddress], block_number: BlockNumber
+    vaults: list[ChecksumAddress],
 ) -> dict[ChecksumAddress, list[ExitRequest]]:
     query = gql(
         """
         query exitRequestQuery($vaults: [String], $block: Int, $first: Int, $skip: Int) {
           exitRequests(
-            block: { number: $block },
             where: { vault_in: $vaults, isClaimable: true },
             orderBy: id,
             first: $first,
@@ -236,7 +235,7 @@ async def graph_get_claimable_exit_requests_by_vaults(
         }
         """
     )
-    params = {'block': block_number, 'vaults': [v.lower() for v in vaults]}
+    params = {'vaults': [v.lower() for v in vaults]}
     response = await graph_client.fetch_pages(query, params=params)
     result = defaultdict(list)
 

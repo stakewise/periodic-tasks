@@ -213,7 +213,6 @@ async def get_claimable_sub_vault_exit_requests(
     """
     vault_to_exit_requests = await graph_get_claimable_exit_requests_by_vaults(
         vaults=sub_vaults,
-        block_number=await execution_client.eth.get_block_number(),
     )
 
     claimable_exit_requests: list[SubVaultExitRequest] = []
