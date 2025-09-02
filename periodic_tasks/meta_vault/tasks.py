@@ -29,6 +29,11 @@ logger = logging.getLogger(__name__)
 
 async def process_meta_vaults() -> None:
     meta_vaults_map = await graph_get_meta_vaults(settings.META_VAULTS)
+
+    missed_meta_vaults = set(settings.META_VAULTS) - set(meta_vaults_map.keys())
+    if missed_meta_vaults:
+        logger.warning('Missed meta vaults in subgraph: %s', ', '.join(missed_meta_vaults))
+
     vaults_updated: set[ChecksumAddress] = set()
 
     for meta_vault_address, meta_vault in meta_vaults_map.items():

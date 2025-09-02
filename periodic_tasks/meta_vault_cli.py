@@ -17,8 +17,6 @@ async def main() -> None:
     if not hot_wallet_account:
         raise ValueError('Set HOT_WALLET_PRIVATE_KEY environment variable')
 
-    logger.info('Wallet address: %s', hot_wallet_account.address)
-
     await setup_execution_client(execution_client, hot_wallet_account)
 
     await process_meta_vaults()
