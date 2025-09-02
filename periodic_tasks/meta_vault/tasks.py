@@ -18,7 +18,6 @@ from periodic_tasks.common.settings import NETWORK, network_config
 from periodic_tasks.common.typings import Vault
 from periodic_tasks.exit.graph import graph_get_claimable_exit_requests_by_vaults
 from periodic_tasks.meta_vault.contracts import MetaVaultContract
-from periodic_tasks.meta_vault.graph import graph_get_meta_vaults
 from periodic_tasks.meta_vault.typings import SubVaultExitRequest
 
 from . import settings
@@ -28,18 +27,23 @@ logger = logging.getLogger(__name__)
 
 
 async def process_meta_vaults() -> None:
-    meta_vaults_map = await graph_get_meta_vaults(settings.META_VAULTS)
-
-    missed_meta_vaults = set(settings.META_VAULTS) - set(meta_vaults_map.keys())
-    if missed_meta_vaults:
-        logger.warning('Missed meta vaults in subgraph: %s', ', '.join(missed_meta_vaults))
+    meta_vaults_map = await graph_get_vaults(
+        graph_client=graph_client,
+        is_meta_vault=True,
+    )
 
     vaults_updated: set[ChecksumAddress] = set()
 
-    for meta_vault_address, meta_vault in meta_vaults_map.items():
+    for meta_vault_address in settings.META_VAULTS:
         logger.info('Processing meta vault: %s', meta_vault_address)
+
+        root_meta_vault = meta_vaults_map.get(meta_vault_address)
+        if not root_meta_vault:
+            logger.warning('Meta vault %s not found in subgraph', meta_vault_address)
+            continue
+
         await meta_vault_tree_update_state(
-            root_meta_vault=meta_vault,
+            root_meta_vault=root_meta_vault,
             meta_vaults_map=meta_vaults_map,
             vaults_updated=vaults_updated,
         )
@@ -132,6 +136,8 @@ async def _get_meta_vault_update_state_calls(
     Get state update calls for a single meta vault and its sub vaults.
     Skips meta vaults among sub vaults.
     """
+    logger.info('Getting state update calls for meta vault %s', meta_vault.address)
+
     # Get sub vaults
     sub_vaults = await graph_get_vaults(
         graph_client=graph_client,
@@ -154,6 +160,7 @@ async def _get_meta_vault_update_state_calls(
 
         # Handle nested meta vaults separately
         if sub_vault.is_meta_vault:
+            logger.info('Sub vault %s is a meta vault, skipping', sub_vault.address)
             continue
 
         logger.info('Sub vault %s is harvestable', sub_vault.address)
@@ -186,7 +193,8 @@ async def _get_meta_vault_update_state_calls(
     # Claim sub vaults exited assets
     if sub_vault_exit_requests:
         logger.info(
-            'Meta vault has %d sub vault exit requests to claim',
+            'Meta vault %s has %d sub vault exit requests to claim',
+            meta_vault.address,
             len(sub_vault_exit_requests),
         )
         calls.append(
@@ -196,7 +204,7 @@ async def _get_meta_vault_update_state_calls(
             )
         )
     else:
-        logger.info('No sub vault exit requests to claim for meta vault')
+        logger.info('No sub vault exit requests to claim for meta vault %s', meta_vault.address)
 
     # Update meta vault state
     is_rewards_nonce_outdated = await is_meta_vault_rewards_nonce_outdated(
@@ -253,7 +261,8 @@ async def is_meta_vault_rewards_nonce_outdated(
         from_block=BlockNumber(keeper_event['blockNumber'] + 1), to_block=current_block
     )
 
-    return meta_vault_event is not None
+    # If no meta vault event is found, the rewards nonce is outdated
+    return meta_vault_event is None
 
 
 async def process_deposit_to_sub_vaults(meta_vault_address: ChecksumAddress) -> None:
