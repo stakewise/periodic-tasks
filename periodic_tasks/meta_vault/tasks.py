@@ -16,7 +16,7 @@ from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.settings import NETWORK, network_config
 from periodic_tasks.common.typings import Vault
-from periodic_tasks.exit.graph import graph_get_claimable_exit_requests_by_vaults
+from periodic_tasks.exit.graph import graph_get_claimable_exit_requests_for_meta_vault
 from periodic_tasks.meta_vault.contracts import MetaVaultContract
 from periodic_tasks.meta_vault.typings import SubVaultExitRequest
 
@@ -156,6 +156,7 @@ async def _get_meta_vault_update_state_calls(
     # Filter harvestable sub vaults and prepare calls for updating their state
     for sub_vault in sub_vaults.values():
         if not sub_vault.can_harvest:
+            logger.info('Sub vault %s is not harvestable, skipping', sub_vault.address)
             continue
 
         # Handle nested meta vaults separately
@@ -163,7 +164,7 @@ async def _get_meta_vault_update_state_calls(
             logger.info('Sub vault %s is a meta vault, skipping', sub_vault.address)
             continue
 
-        logger.info('Sub vault %s is harvestable', sub_vault.address)
+        logger.info('Getting state update call for sub vault %s', sub_vault.address)
         sub_vaults_to_harvest.append(sub_vault.address)
         calls.append(
             (
@@ -174,12 +175,9 @@ async def _get_meta_vault_update_state_calls(
             )
         )
 
-    if not sub_vaults_to_harvest:
-        logger.info('No harvestable sub vaults for meta vault %s', meta_vault.address)
-
     # Collect claimable exit requests for the sub vaults
     sub_vault_exit_requests = await get_claimable_sub_vault_exit_requests(
-        sub_vaults=meta_vault.sub_vaults,
+        meta_vault_address=meta_vault.address,
     )
 
     # Meta vault contract
@@ -219,13 +217,13 @@ async def _get_meta_vault_update_state_calls(
 
 
 async def get_claimable_sub_vault_exit_requests(
-    sub_vaults: list[ChecksumAddress],
+    meta_vault_address: ChecksumAddress,
 ) -> list[SubVaultExitRequest]:
     """
     Get claimable exit requests for the given sub vaults.
     """
-    vault_to_exit_requests = await graph_get_claimable_exit_requests_by_vaults(
-        vaults=sub_vaults,
+    vault_to_exit_requests = await graph_get_claimable_exit_requests_for_meta_vault(
+        meta_vault=meta_vault_address,
     )
 
     claimable_exit_requests: list[SubVaultExitRequest] = []

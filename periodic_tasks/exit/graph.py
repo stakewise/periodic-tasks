@@ -208,14 +208,14 @@ async def graph_get_exit_requests_by_ids(
     return result
 
 
-async def graph_get_claimable_exit_requests_by_vaults(
-    vaults: list[ChecksumAddress],
+async def graph_get_claimable_exit_requests_for_meta_vault(
+    meta_vault: ChecksumAddress,
 ) -> dict[ChecksumAddress, list[ExitRequest]]:
     query = gql(
         """
-        query exitRequestQuery($vaults: [String], $block: Int, $first: Int, $skip: Int) {
+        query exitRequestQuery($owner: String, $first: Int, $skip: Int) {
           exitRequests(
-            where: { vault_in: $vaults, isClaimable: true },
+            where: { owner: $owner, isClaimable: true },
             orderBy: id,
             first: $first,
             skip: $skip
@@ -223,6 +223,7 @@ async def graph_get_claimable_exit_requests_by_vaults(
             id
             positionTicket
             timestamp
+            owner
             receiver
             exitQueueIndex
             isClaimable
@@ -235,7 +236,7 @@ async def graph_get_claimable_exit_requests_by_vaults(
         }
         """
     )
-    params = {'vaults': [v.lower() for v in vaults]}
+    params = {'owner': meta_vault.lower()}
     response = await graph_client.fetch_pages(query, params=params)
     result = defaultdict(list)
 
