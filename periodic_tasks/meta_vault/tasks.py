@@ -59,20 +59,26 @@ async def meta_vault_tree_update_state(
     Update the state for the root meta vault and all its sub vaults.
     Sub vaults may themselves be meta vaults, so the update traverses the entire meta vault tree.
     """
-    calls = await _get_meta_vault_tree_update_state_calls(
+    calls_with_description = await _get_meta_vault_tree_update_state_calls(
         root_meta_vault=root_meta_vault,
         meta_vaults_map=meta_vaults_map,
         vaults_updated=vaults_updated,
     )
+    calls = [(address, call) for address, call, _ in calls_with_description]
+
     if not calls:
         logger.info('Meta vault %s state is up-to-date, no updates needed', root_meta_vault.address)
         return
+
+    tx_steps = [description for _, _, description in calls_with_description]
 
     # Submit the transaction
     logger.info(
         'Submitting transaction to update state for meta vault tree %s',
         root_meta_vault.address,
     )
+    logger.info('Transaction steps: \n%s', '\n'.join(tx_steps))
+
     tx_hash = await multicall_contract.tx_aggregate(calls)
 
     logger.info('Waiting for transaction %s confirmation', tx_hash)
@@ -84,12 +90,13 @@ async def _get_meta_vault_tree_update_state_calls(
     root_meta_vault: Vault,
     meta_vaults_map: dict[ChecksumAddress, Vault],
     vaults_updated: set[ChecksumAddress],
-) -> list[tuple[ChecksumAddress, HexStr]]:
+) -> list[tuple[ChecksumAddress, HexStr, str]]:
     """
     Traverses meta vault tree and collects state update calls.
+    Each call is a tuple of (vault_address, call_data, description).
     """
     stack = [root_meta_vault.address]
-    calls: list[tuple[ChecksumAddress, HexStr]] = []
+    calls: list[tuple[ChecksumAddress, HexStr, str]] = []
 
     while stack:
         # Take the last meta vault
@@ -131,10 +138,11 @@ async def _get_meta_vault_tree_update_state_calls(
 
 async def _get_meta_vault_update_state_calls(
     meta_vault: Vault,
-) -> list[tuple[ChecksumAddress, HexStr]]:
+) -> list[tuple[ChecksumAddress, HexStr, str]]:
     """
     Get state update calls for a single meta vault and its sub vaults.
     Skips meta vaults among sub vaults.
+    Each call is a tuple of (vault_address, call_data, description).
     """
     logger.info('Getting state update calls for meta vault %s', meta_vault.address)
 
@@ -144,7 +152,7 @@ async def _get_meta_vault_update_state_calls(
         vaults=meta_vault.sub_vaults,
     )
     sub_vaults_to_harvest: list[ChecksumAddress] = []
-    calls: list[tuple[ChecksumAddress, HexStr]] = []
+    calls: list[tuple[ChecksumAddress, HexStr, str]] = []
 
     # Vault contract
     vault_encoder = VaultContract(
@@ -172,6 +180,7 @@ async def _get_meta_vault_update_state_calls(
                 vault_encoder.update_state(
                     sub_vault.harvest_params,
                 ),
+                f'Update state for sub vault {sub_vault.address}',
             )
         )
 
@@ -199,6 +208,8 @@ async def _get_meta_vault_update_state_calls(
             (
                 meta_vault.address,
                 meta_vault_encoder.claim_sub_vaults_exited_assets(sub_vault_exit_requests),
+                f'Claim {len(sub_vault_exit_requests)} sub vault exit requests '
+                f'for meta vault {meta_vault.address}',
             )
         )
     else:
@@ -211,7 +222,11 @@ async def _get_meta_vault_update_state_calls(
 
     if sub_vaults_to_harvest or is_rewards_nonce_outdated:
         calls.append(
-            (meta_vault.address, meta_vault_encoder.update_state(meta_vault.harvest_params))
+            (
+                meta_vault.address,
+                meta_vault_encoder.update_state(meta_vault.harvest_params),
+                f'Update state for meta vault {meta_vault.address}',
+            ),
         )
     return calls
 
