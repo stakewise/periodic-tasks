@@ -67,7 +67,7 @@ class NetworkConfig(BaseNetworkConfig):
     VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS: ChecksumAddress
     LEVERAGE_STRATEGY_CONTRACT_ADDRESS: ChecksumAddress
     STRATEGY_REGISTRY_CONTRACT_ADDRESS: ChecksumAddress
-    OSTOKEN_ESCROW_CONTRACT_ADDRESS: ChecksumAddress
+    OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS: ChecksumAddress
     VAULT_BALANCE_UNIT: str
 
 
@@ -83,7 +83,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x90b82E4b3aa385B4A02B7EBc1892a4BeD6B5c465'
         ),
-        OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
+        OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x09e84205DF7c68907e619D07aFD90143c5763605'
         ),
         VAULT_BALANCE_UNIT='ETH',
@@ -99,7 +99,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x6A2911F94da08Da01158d645Bf85152b338E015D'
         ),
-        OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
+        OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xdC1347cC04d4a8945b98A09C3c5585286bbA5C2B'
         ),
         VAULT_BALANCE_UNIT='ETH',
@@ -111,7 +111,9 @@ NETWORKS: dict[str, NetworkConfig] = {
         ),
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
-        OSTOKEN_ESCROW_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0x28F325dD287a5984B754d34CfCA38af3A8429e71'
+        ),
         VAULT_BALANCE_UNIT='mGNO',
     ),
     CHIADO: NetworkConfig(
@@ -121,7 +123,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         ),
         LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
-        OSTOKEN_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
+        OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x00aa8A78d88a9865b5b0F4ce50c3bB018c93FBa7'
         ),
         VAULT_BALANCE_UNIT='mGNO',
