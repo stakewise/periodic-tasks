@@ -190,15 +190,15 @@ async def process_deposit_to_sub_vaults(meta_vault_address: ChecksumAddress) -> 
     )
     withdrawable_assets = await meta_vault_contract.withdrawable_assets()
 
+    if NETWORK in GNO_NETWORKS:
+        withdrawable_assets = convert_to_mgno(withdrawable_assets)
+
     logger.info(
         'Meta vault %s has withdrawable assets: %.2f %s',
         meta_vault_address,
         Web3.from_wei(withdrawable_assets, 'ether'),
         network_config.VAULT_BALANCE_UNIT,
     )
-
-    if NETWORK in GNO_NETWORKS:
-        withdrawable_assets = convert_to_mgno(withdrawable_assets)
 
     if withdrawable_assets < settings.META_VAULT_MIN_DEPOSIT_AMOUNT:
         return
