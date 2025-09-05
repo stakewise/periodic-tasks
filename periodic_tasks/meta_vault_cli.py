@@ -17,12 +17,9 @@ async def main() -> None:
     if not hot_wallet_account:
         raise ValueError('Set HOT_WALLET_PRIVATE_KEY environment variable')
 
-    logger.info('Wallet address: %s', hot_wallet_account.address)
-
     await setup_execution_client(execution_client, hot_wallet_account)
 
-    block = await execution_client.eth.get_block('finalized')
-    await process_meta_vaults(block_number=block['number'])
+    await process_meta_vaults()
 
 
 setup_logging()
