@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from eth_typing import ChecksumAddress
+from eth_typing import ChecksumAddress, HexStr
 
 from periodic_tasks.exit.typings import ExitRequest
 
@@ -21,3 +21,10 @@ class SubVaultExitRequest:
             vault=exit_request.vault,
             timestamp=exit_request.timestamp,
         )
+
+
+@dataclass
+class ContractCall:
+    address: ChecksumAddress
+    data: HexStr
+    description: str
