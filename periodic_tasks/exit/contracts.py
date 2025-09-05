@@ -48,6 +48,6 @@ strategy_registry_contract = StrategiesRegistryContract(
 
 ostoken_vault_escrow_contract = OsTokenVaultEscrowContract(
     abi_path='abi/IOsTokenVaultEscrow.json',
-    address=network_config.OSTOKEN_ESCROW_CONTRACT_ADDRESS,
+    address=network_config.OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS,
     client=execution_client,
 )

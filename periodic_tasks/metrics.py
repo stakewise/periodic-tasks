@@ -63,7 +63,7 @@ async def liquidation_metrics() -> None:
     block_number = block['number']
     metrics.execution_block.labels(network=NETWORK).set(block_number)
 
-    if network_config.OSTOKEN_ESCROW_CONTRACT_ADDRESS != ZERO_CHECKSUM_ADDRESS:
+    if network_config.OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS != ZERO_CHECKSUM_ADDRESS:
         exit_requests = await fetch_ostoken_exit_requests(block_number)
         for exit_request in exit_requests[:RECORDS_LIMIT]:
             metrics.ostoken_exit_request_ltv.labels(
