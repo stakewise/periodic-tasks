@@ -180,7 +180,7 @@ async def graph_get_exit_requests_by_ids(
         query exitRequestQuery($ids: [String], $block: Int, $first: Int, $skip: Int) {
           exitRequests(
             block: { number: $block },
-            where: { id_in: $ids },
+            where: { id_in: $ids, isClaimed: false },
             orderBy: id,
             first: $first,
             skip: $skip

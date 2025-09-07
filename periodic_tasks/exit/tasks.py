@@ -4,12 +4,13 @@ from web3.types import BlockNumber
 
 from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.typings import HarvestParams
+from periodic_tasks.common.settings import network_config
 
 from .clients import execution_client, graph_client
 from .contracts import (
-    leverage_strategy_contract,
     ostoken_vault_escrow_contract,
     strategy_registry_contract,
+    get_leverage_strategy_contract,
 )
 from .execution import (
     can_force_enter_exit_queue,
@@ -87,7 +88,11 @@ async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
             vault,
             position_owner,
         )
+        leverage_strategy_contract = await get_leverage_strategy_contract(
+            os_token_exit_request.owner
+        )
         tx_hash = await claim_exited_assets(
+            leverage_strategy_contract=leverage_strategy_contract,
             vault=vault,
             user=position_owner,
             exit_request=os_token_exit_request.exit_request,
@@ -103,9 +108,14 @@ async def handle_ostoken_exit_requests(block_number: BlockNumber) -> None:
 
 
 async def fetch_leverage_positions(block_number: BlockNumber) -> list[LeveragePosition]:
-    strategy_id = await leverage_strategy_contract.strategy_id()
-    borrow_ltv = await strategy_registry_contract.get_borrow_ltv_percent(strategy_id) / WAD
-    vault_ltv = await strategy_registry_contract.get_vault_ltv_percent(strategy_id) / WAD
+    borrow_ltv = (
+        await strategy_registry_contract.get_borrow_ltv_percent(network_config.LEVERAGE_STRATEGY_ID)
+        / WAD
+    )
+    vault_ltv = (
+        await strategy_registry_contract.get_vault_ltv_percent(network_config.LEVERAGE_STRATEGY_ID)
+        / WAD
+    )
     all_leverage_positions = await graph_get_leverage_positions(block_number=block_number)
 
     # Get aave positions by borrow ltv
@@ -152,7 +162,9 @@ async def handle_leverage_position(
     Submit force exit for leverage position.
     Also check for position active exit request and claim assets if possible.
     """
+    leverage_strategy_contract = await get_leverage_strategy_contract(position.proxy)
     if not await can_force_enter_exit_queue(
+        leverage_strategy_contract=leverage_strategy_contract,
         vault=position.vault,
         user=position.user,
         harvest_params=harvest_params,
@@ -173,6 +185,7 @@ async def handle_leverage_position(
             position.user,
         )
         tx_hash = await claim_exited_assets(
+            leverage_strategy_contract=leverage_strategy_contract,
             vault=position.vault,
             user=position.user,
             exit_request=position.exit_request,
@@ -195,6 +208,7 @@ async def handle_leverage_position(
 
     # recheck because position state has changed after claiming assets
     if not await can_force_enter_exit_queue(
+        leverage_strategy_contract=leverage_strategy_contract,
         vault=position.vault,
         user=position.user,
         harvest_params=harvest_params,
@@ -208,6 +222,7 @@ async def handle_leverage_position(
         return
 
     tx_hash = await force_enter_exit_queue(
+        leverage_strategy_contract=leverage_strategy_contract,
         vault=position.vault,
         user=position.user,
         harvest_params=harvest_params,

@@ -70,10 +70,7 @@ async def liquidation_metrics() -> None:
                 network=NETWORK, user=exit_request.owner, vault=exit_request.vault
             ).set(exit_request.ltv)
 
-    if ZERO_CHECKSUM_ADDRESS not in (
-        network_config.LEVERAGE_STRATEGY_CONTRACT_ADDRESS,
-        network_config.STRATEGY_REGISTRY_CONTRACT_ADDRESS,
-    ):
+    if network_config.LEVERAGE_STRATEGY_ID:
         leverage_positions = await fetch_leverage_positions(block_number)
         for leverage_position in leverage_positions[:RECORDS_LIMIT]:
             metrics.leverage_position_ltv.labels(
