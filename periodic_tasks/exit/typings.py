@@ -11,6 +11,7 @@ class ExitRequest:
     position_ticket: int
     timestamp: int
     exit_queue_index: int | None
+    is_claimed: bool
     is_claimable: bool
     exited_assets: Wei
     total_assets: Wei
@@ -30,6 +31,7 @@ class ExitRequest:
             position_ticket=int(data['positionTicket']),
             timestamp=int(data['timestamp']),
             exit_queue_index=exit_queue_index,
+            is_claimed=data['isClaimed'],
             is_claimable=data['isClaimable'],
             exited_assets=Wei(int(data['exitedAssets'])),
             total_assets=Wei(int(data['totalAssets'])),

@@ -16,8 +16,9 @@ from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.settings import NETWORK, network_config
 from periodic_tasks.common.typings import Vault
-from periodic_tasks.exit.graph import graph_get_claimable_exit_requests_for_meta_vault
+from periodic_tasks.exit.graph import graph_get_exit_requests_for_meta_vault
 from periodic_tasks.meta_vault.contracts import MetaVaultContract
+from periodic_tasks.meta_vault.exceptions import ClaimDelayNotPassedException
 from periodic_tasks.meta_vault.typings import ContractCall, SubVaultExitRequest
 
 from . import settings
@@ -43,11 +44,21 @@ async def process_meta_vaults() -> None:
             continue
 
         # Update the state for the entire meta vault tree
-        vaults_updated_in_tree = await meta_vault_tree_update_state(
-            root_meta_vault=root_meta_vault,
-            meta_vaults_map=meta_vaults_map,
-            vaults_updated_previously=vaults_updated_previously,
-        )
+        try:
+            vaults_updated_in_tree = await meta_vault_tree_update_state(
+                root_meta_vault=root_meta_vault,
+                meta_vaults_map=meta_vaults_map,
+                vaults_updated_previously=vaults_updated_previously,
+            )
+        except ClaimDelayNotPassedException as e:
+            logger.error(
+                'Can not process meta vault %s because claim delay for exit request with '
+                'position ticket %s has not passed yet',
+                root_meta_vault.address,
+                e.exit_request.position_ticket,
+            )
+            continue
+
         vaults_updated_previously.update(vaults_updated_in_tree)
 
         # Deposit to sub vaults if there are withdrawable assets
@@ -74,6 +85,7 @@ async def meta_vault_tree_update_state(
         root_meta_vault=root_meta_vault,
         meta_vaults_map=meta_vaults_map,
     )
+
     calls: list[tuple[ChecksumAddress, HexStr]] = []
     tx_steps: list[str] = []
     vaults_updated: set[ChecksumAddress] = set()
@@ -244,13 +256,24 @@ async def get_claimable_sub_vault_exit_requests(
     """
     Get claimable exit requests for the given sub vaults.
     """
-    vault_to_exit_requests = await graph_get_claimable_exit_requests_for_meta_vault(
+    vault_to_exit_requests = await graph_get_exit_requests_for_meta_vault(
         meta_vault=meta_vault_address,
     )
 
     claimable_exit_requests: list[SubVaultExitRequest] = []
+
     for exit_requests in vault_to_exit_requests.values():
         for exit_request in exit_requests:
+            # Verify if the claim delay has elapsed
+            # Relevant for testnets with short exit queues (e.g., Chiado)
+            if (
+                exit_request.exited_assets == exit_request.total_assets
+                and exit_request.exited_assets > 0
+                and not exit_request.is_claimable
+                and not exit_request.is_claimed
+            ):
+                raise ClaimDelayNotPassedException(exit_request)
+
             claimable_exit_requests.append(SubVaultExitRequest.from_exit_request(exit_request))
 
     return claimable_exit_requests
