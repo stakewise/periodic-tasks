@@ -39,7 +39,7 @@ async def process_meta_vaults() -> None:
 
         root_meta_vault = meta_vaults_map.get(meta_vault_address)
         if not root_meta_vault:
-            logger.warning('Meta vault %s not found in subgraph', meta_vault_address)
+            logger.error('Meta vault %s not found in subgraph', meta_vault_address)
             continue
 
         await meta_vault_tree_update_state(
