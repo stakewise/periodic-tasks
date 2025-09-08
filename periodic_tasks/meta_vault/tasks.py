@@ -1,6 +1,6 @@
 import logging
 
-from eth_typing import ChecksumAddress
+from eth_typing import ChecksumAddress, HexStr
 from sw_utils import GNO_NETWORKS, convert_to_mgno
 from web3 import Web3
 from web3.types import BlockNumber
@@ -42,35 +42,54 @@ async def process_meta_vaults() -> None:
             logger.error('Meta vault %s not found in subgraph', meta_vault_address)
             continue
 
-        await meta_vault_tree_update_state(
+        vaults_updated_in_tree = await meta_vault_tree_update_state(
             root_meta_vault=root_meta_vault,
             meta_vaults_map=meta_vaults_map,
-            vaults_updated=vaults_updated,
+            vaults_updated_previously=vaults_updated,
         )
+        vaults_updated.update(vaults_updated_in_tree)
         await process_deposit_to_sub_vaults(meta_vault_address=meta_vault_address)
 
 
 async def meta_vault_tree_update_state(
     root_meta_vault: Vault,
     meta_vaults_map: dict[ChecksumAddress, Vault],
-    vaults_updated: set[ChecksumAddress],
-) -> None:
+    vaults_updated_previously: set[ChecksumAddress],
+) -> set[ChecksumAddress]:
     """
     Update the state for the root meta vault and all its sub vaults.
     Sub vaults may themselves be meta vaults, so the update traverses the entire meta vault tree.
+
+    `vaults_updated_previously` is a set of vault addresses that have already been updated
+    as a part of another meta vault tree. This is to avoid duplicate updates.
+    Subgraph may not sync fast enough to reflect the state changes made by previous transactions,
+    so we need to keep track of the vaults that have already been updated.
+
+    Returns a set of vault addresses that were updated in this call.
     """
     calls_with_description = await _get_meta_vault_tree_update_state_calls(
         root_meta_vault=root_meta_vault,
         meta_vaults_map=meta_vaults_map,
-        vaults_updated=vaults_updated,
     )
-    calls = [(c.address, c.data) for c in calls_with_description]
+    calls: list[tuple[ChecksumAddress, HexStr]] = []
+    tx_steps: list[str] = []
+    vaults_updated: set[ChecksumAddress] = set()
+
+    # Filter out calls for vaults that have already been updated
+    for c in calls_with_description:
+        if c.address in vaults_updated_previously:
+            logger.info(
+                'Vault %s is already updated as a part of another meta vault tree',
+                c.address,
+            )
+            continue
+        calls.append((c.address, c.data))
+        tx_steps.append(c.description)
+        vaults_updated.add(c.address)
 
     if not calls:
         logger.info('Meta vault %s state is up-to-date, no updates needed', root_meta_vault.address)
-        return
-
-    tx_steps = [c.description for c in calls_with_description]
+        return set()
 
     # Submit the transaction
     logger.info(
@@ -85,15 +104,15 @@ async def meta_vault_tree_update_state(
     await wait_for_tx_confirmation(execution_client, tx_hash)
     logger.info('Transaction %s confirmed', tx_hash)
 
+    return vaults_updated
+
 
 async def _get_meta_vault_tree_update_state_calls(
     root_meta_vault: Vault,
     meta_vaults_map: dict[ChecksumAddress, Vault],
-    vaults_updated: set[ChecksumAddress],
 ) -> list[ContractCall]:
     """
     Traverses meta vault tree and collects state update calls.
-    Each call is a tuple of (vault_address, call_data, description).
     """
     stack = [root_meta_vault.address]
     calls: list[ContractCall] = []
@@ -103,35 +122,20 @@ async def _get_meta_vault_tree_update_state_calls(
         meta_vault_address = stack.pop()
         meta_vault = meta_vaults_map[meta_vault_address]
 
-        if meta_vault.address in vaults_updated:
-            logger.info(
-                'Meta vault %s is already updated as a part of another meta vault tree',
-                meta_vault.address,
-            )
-            continue
-
         # Get calls for a single meta vault
         # skipping meta vaults among sub vaults.
         meta_vault_calls = await _get_meta_vault_update_state_calls(
             meta_vault=meta_vault,
         )
-        # Filter out already updated vaults
-        meta_vault_calls = [c for c in meta_vault_calls if c.address not in vaults_updated]
 
         # Insert new calls at the start
         calls = meta_vault_calls + calls
 
-        # Mark sub vaults as updated
-        vaults_updated.update({c.address for c in meta_vault_calls})
-
         # Schedule nested meta vaults for processing
         for sub_vault in meta_vault.sub_vaults:
-            if sub_vault in meta_vaults_map and sub_vault not in vaults_updated:
+            if sub_vault in meta_vaults_map:
                 stack.append(sub_vault)
                 continue
-
-        # Mark the root meta vault as updated
-        vaults_updated.add(meta_vault.address)
 
     return calls
 

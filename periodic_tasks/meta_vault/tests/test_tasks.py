@@ -5,7 +5,10 @@ from eth_typing import ChecksumAddress
 from sw_utils.graph import GraphClient
 
 from periodic_tasks.common.typings import Vault
-from periodic_tasks.meta_vault.tasks import _get_meta_vault_tree_update_state_calls
+from periodic_tasks.meta_vault.tasks import (
+    meta_vault_tree_update_state,
+    multicall_contract,
+)
 from periodic_tasks.meta_vault.tests.factories import create_vault
 
 
@@ -18,7 +21,7 @@ class TestMetaVaultTreeUpdateStateCalls:
         meta_vaults_map = {
             meta_vault.address: meta_vault,
         }
-        vaults_updated = set()
+        vaults_updated_previously = set()
         graph_mock = GraphMock(
             [
                 meta_vault,
@@ -28,18 +31,21 @@ class TestMetaVaultTreeUpdateStateCalls:
         )
 
         # Act
-        with self.patch(graph_mock=graph_mock):
-            calls = await _get_meta_vault_tree_update_state_calls(
+        with self.patch(graph_mock=graph_mock) as tx_aggregate_mock:
+            vaults_updated = await meta_vault_tree_update_state(
                 root_meta_vault=meta_vault,
                 meta_vaults_map=meta_vaults_map,
-                vaults_updated=vaults_updated,
+                vaults_updated_previously=vaults_updated_previously,
             )
 
         # Assert
+        calls = tx_aggregate_mock.call_args[0][0]
         assert len(calls) == 3
-        assert calls[0].address == meta_vault.sub_vaults[0]
-        assert calls[1].address == meta_vault.sub_vaults[1]
-        assert calls[2].address == meta_vault.address
+        assert [c[0] for c in calls] == [
+            meta_vault.sub_vaults[0],
+            meta_vault.sub_vaults[1],
+            meta_vault.address,
+        ]
         assert vaults_updated == {meta_vault.address, *meta_vault.sub_vaults}
 
     async def test_meta_vault_already_updated(self):
@@ -57,19 +63,19 @@ class TestMetaVaultTreeUpdateStateCalls:
                 sub_vault_1,
             ]
         )
-        vaults_updated = {meta_vault.address, *meta_vault.sub_vaults}
+        vaults_updated_previously = {meta_vault.address, *meta_vault.sub_vaults}
 
         # Act
-        with self.patch(graph_mock=graph_mock):
-            calls = await _get_meta_vault_tree_update_state_calls(
+        with self.patch(graph_mock=graph_mock) as tx_aggregate_mock:
+            vaults_updated = await meta_vault_tree_update_state(
                 root_meta_vault=meta_vault,
                 meta_vaults_map=meta_vaults_map,
-                vaults_updated=vaults_updated,
+                vaults_updated_previously=vaults_updated_previously,
             )
 
         # Assert
-        assert len(calls) == 0
-        assert vaults_updated == {meta_vault.address, *meta_vault.sub_vaults}
+        assert tx_aggregate_mock.call_args is None
+        assert vaults_updated == set()
 
     async def test_sub_vault_already_updated(self):
         # Arrange
@@ -86,21 +92,21 @@ class TestMetaVaultTreeUpdateStateCalls:
                 sub_vault_1,
             ]
         )
-        vaults_updated = {meta_vault.sub_vaults[0]}
+        vaults_updated_previously = {meta_vault.sub_vaults[0]}
 
         # Act
-        with self.patch(graph_mock=graph_mock):
-            calls = await _get_meta_vault_tree_update_state_calls(
+        with self.patch(graph_mock=graph_mock) as tx_aggregate_mock:
+            vaults_updated = await meta_vault_tree_update_state(
                 root_meta_vault=meta_vault,
                 meta_vaults_map=meta_vaults_map,
-                vaults_updated=vaults_updated,
+                vaults_updated_previously=vaults_updated_previously,
             )
 
         # Assert
+        calls = tx_aggregate_mock.call_args[0][0]
         assert len(calls) == 2
-        assert calls[0].address == meta_vault.sub_vaults[1]
-        assert calls[1].address == meta_vault.address
-        assert vaults_updated == {meta_vault.address, *meta_vault.sub_vaults}
+        assert [c[0] for c in calls] == [meta_vault.sub_vaults[1], meta_vault.address]
+        assert vaults_updated == {meta_vault.sub_vaults[1], meta_vault.address}
 
     async def test_nested_meta_vault_basic(self):
         # Arrange
@@ -120,7 +126,7 @@ class TestMetaVaultTreeUpdateStateCalls:
             meta_vault.address: meta_vault,
             sub_vault_0.address: sub_vault_0,
         }
-        vaults_updated = set()
+        vaults_updated_previously = set()
         graph_mock = GraphMock(
             [
                 meta_vault,
@@ -132,15 +138,16 @@ class TestMetaVaultTreeUpdateStateCalls:
         )
 
         # Act
-        with self.patch(graph_mock=graph_mock):
-            calls = await _get_meta_vault_tree_update_state_calls(
+        with self.patch(graph_mock=graph_mock) as tx_aggregate_mock:
+            vaults_updated = await meta_vault_tree_update_state(
                 root_meta_vault=meta_vault,
                 meta_vaults_map=meta_vaults_map,
-                vaults_updated=vaults_updated,
+                vaults_updated_previously=vaults_updated_previously,
             )
 
         # Assert
-        assert [c.address for c in calls] == [
+        calls = tx_aggregate_mock.call_args[0][0]
+        assert [c[0] for c in calls] == [
             sub_vault_2.address,
             sub_vault_3.address,
             sub_vault_0.address,
@@ -180,23 +187,20 @@ class TestMetaVaultTreeUpdateStateCalls:
                 sub_vault_3,
             ]
         )
-        vaults_updated = {sub_vault_0.address, *sub_vault_0.sub_vaults}
+        vaults_updated_previously = {sub_vault_0.address, *sub_vault_0.sub_vaults}
 
         # Act
-        with self.patch(graph_mock=graph_mock):
-            calls = await _get_meta_vault_tree_update_state_calls(
+        with self.patch(graph_mock=graph_mock) as tx_aggregate_mock:
+            vaults_updated = await meta_vault_tree_update_state(
                 root_meta_vault=meta_vault,
                 meta_vaults_map=meta_vaults_map,
-                vaults_updated=vaults_updated,
+                vaults_updated_previously=vaults_updated_previously,
             )
 
         # Assert
-        assert [c.address for c in calls] == [sub_vault_1.address, meta_vault.address]
-        assert vaults_updated == {
-            meta_vault.address,
-            *meta_vault.sub_vaults,
-            *sub_vault_0.sub_vaults,
-        }
+        calls = tx_aggregate_mock.call_args[0][0]
+        assert [c[0] for c in calls] == [sub_vault_1.address, meta_vault.address]
+        assert vaults_updated == {sub_vault_1.address, meta_vault.address}
 
     async def test_sub_vault_level_2_already_updated(self):
         # Arrange
@@ -225,27 +229,29 @@ class TestMetaVaultTreeUpdateStateCalls:
                 sub_vault_3,
             ]
         )
-        vaults_updated = {sub_vault_2.address}
+        vaults_updated_previously = {sub_vault_2.address}
 
         # Act
-        with self.patch(graph_mock=graph_mock):
-            calls = await _get_meta_vault_tree_update_state_calls(
+        with self.patch(graph_mock=graph_mock) as tx_aggregate_mock:
+            vaults_updated_previously = await meta_vault_tree_update_state(
                 root_meta_vault=meta_vault,
                 meta_vaults_map=meta_vaults_map,
-                vaults_updated=vaults_updated,
+                vaults_updated_previously=vaults_updated_previously,
             )
 
         # Assert
-        assert [c.address for c in calls] == [
+        calls = tx_aggregate_mock.call_args[0][0]
+        assert [c[0] for c in calls] == [
             sub_vault_3.address,
             sub_vault_0.address,
             sub_vault_1.address,
             meta_vault.address,
         ]
-        assert vaults_updated == {
+        assert vaults_updated_previously == {
+            sub_vault_3.address,
+            sub_vault_0.address,
+            sub_vault_1.address,
             meta_vault.address,
-            *meta_vault.sub_vaults,
-            *sub_vault_0.sub_vaults,
         }
 
     @contextmanager
@@ -258,8 +264,12 @@ class TestMetaVaultTreeUpdateStateCalls:
         ), mock.patch(
             'periodic_tasks.meta_vault.tasks.is_meta_vault_rewards_nonce_outdated',
             return_value=False,
+        ), mock.patch.object(
+            multicall_contract, 'tx_aggregate', return_value='0x123'
+        ) as tx_aggregate_mock, mock.patch(
+            'periodic_tasks.meta_vault.tasks.wait_for_tx_confirmation',
         ):
-            yield
+            yield tx_aggregate_mock
 
 
 class GraphMock:
