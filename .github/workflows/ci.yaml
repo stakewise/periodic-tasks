@@ -47,6 +47,48 @@ jobs:
           dot: true
           ignore_files: .venv/
 
+
+  test:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10.14
+
+      # Install poetry
+      - name: Load cached Poetry installation
+        uses: actions/cache@v4
+        with:
+          path: ~/.local
+          key: poetry-0
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.3
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      # Install dependencies
+      - name: Install dependencies
+        run: poetry install --no-interaction --no-root
+
+      - name: Create env-file
+        # Do not use this private key outside of CI tests.
+        run: cp .env.example .env &&
+          echo HOT_WALLET_PRIVATE_KEY=0x95d3c5e483e9b1d4f5fc8e79b2deaf51362980de62dbb082a9a4257eef653d7d >> .env &&
+          echo GRAPH_API_URL=https://graph >> .env &&
+          echo META_VAULTS=0x92d86D0B385fE9f3e298C791Ef710aCC94c0353E >> .env
+
+      # Run tests
+      - name: Run tests
+        run: poetry run pytest periodic_tasks
+
   security:
     name: pip-audit
     runs-on: ubuntu-latest
@@ -86,7 +128,7 @@ jobs:
 
   docker:
     name: Build Docker Image
-    needs: [pre-commit, security]
+    needs: [pre-commit, test, security]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

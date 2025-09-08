@@ -20,18 +20,21 @@ mypy = "==1.6.1"
 isort = "==5.12.0"
 pre-commit = "==3.5.0"
 Flake8-pyproject = "==1.2.3"
-bandit = { version = "==1.7.5", extras = ["toml"] }
+bandit = { version = "==1.8.6", extras = ["toml"] }
 black = { version = "==23.10.0", extras = ["d"] }
 flake8-print = "==5.0.0"
 flake8-datetimez = "==20.10.0"
 types-requests = "==2.31.0.20240311"
+pytest = "==8.4.1"
+pytest-asyncio = "==1.1.0"
+faker = "^19.11.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.bandit]
-exclude_dirs = ["periodic_tasks/config/networks.py"]
+exclude_dirs = ["periodic_tasks/config/networks.py", "*/tests/*"]
 skips = ["B608"]
 
 [tool.pylint."pre-commit-hook"]
@@ -87,3 +90,7 @@ exclude = ["networks.py"]
 ignore_names = [
     "default_account",  # execution client
 ]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
