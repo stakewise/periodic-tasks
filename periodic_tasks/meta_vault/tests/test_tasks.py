@@ -37,9 +37,9 @@ class TestMetaVaultTreeUpdateStateCalls:
 
         # Assert
         assert len(calls) == 3
-        assert calls[0][0] == meta_vault.sub_vaults[0]
-        assert calls[1][0] == meta_vault.sub_vaults[1]
-        assert calls[2][0] == meta_vault.address
+        assert calls[0].address == meta_vault.sub_vaults[0]
+        assert calls[1].address == meta_vault.sub_vaults[1]
+        assert calls[2].address == meta_vault.address
         assert vaults_updated == {meta_vault.address, *meta_vault.sub_vaults}
 
     async def test_meta_vault_already_updated(self):
@@ -98,8 +98,8 @@ class TestMetaVaultTreeUpdateStateCalls:
 
         # Assert
         assert len(calls) == 2
-        assert calls[0][0] == meta_vault.sub_vaults[1]
-        assert calls[1][0] == meta_vault.address
+        assert calls[0].address == meta_vault.sub_vaults[1]
+        assert calls[1].address == meta_vault.address
         assert vaults_updated == {meta_vault.address, *meta_vault.sub_vaults}
 
     async def test_nested_meta_vault_basic(self):
@@ -140,7 +140,7 @@ class TestMetaVaultTreeUpdateStateCalls:
             )
 
         # Assert
-        assert [c[0] for c in calls] == [
+        assert [c.address for c in calls] == [
             sub_vault_2.address,
             sub_vault_3.address,
             sub_vault_0.address,
@@ -191,7 +191,7 @@ class TestMetaVaultTreeUpdateStateCalls:
             )
 
         # Assert
-        assert [c[0] for c in calls] == [sub_vault_1.address, meta_vault.address]
+        assert [c.address for c in calls] == [sub_vault_1.address, meta_vault.address]
         assert vaults_updated == {
             meta_vault.address,
             *meta_vault.sub_vaults,
@@ -236,7 +236,7 @@ class TestMetaVaultTreeUpdateStateCalls:
             )
 
         # Assert
-        assert [c[0] for c in calls] == [
+        assert [c.address for c in calls] == [
             sub_vault_3.address,
             sub_vault_0.address,
             sub_vault_1.address,
