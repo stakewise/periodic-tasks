@@ -32,7 +32,7 @@ async def process_meta_vaults() -> None:
         is_meta_vault=True,
     )
 
-    vaults_updated: set[ChecksumAddress] = set()
+    vaults_updated_previously: set[ChecksumAddress] = set()
 
     for meta_vault_address in settings.META_VAULTS:
         logger.info('Processing meta vault: %s', meta_vault_address)
@@ -42,12 +42,15 @@ async def process_meta_vaults() -> None:
             logger.error('Meta vault %s not found in subgraph', meta_vault_address)
             continue
 
+        # Update the state for the entire meta vault tree
         vaults_updated_in_tree = await meta_vault_tree_update_state(
             root_meta_vault=root_meta_vault,
             meta_vaults_map=meta_vaults_map,
-            vaults_updated_previously=vaults_updated,
+            vaults_updated_previously=vaults_updated_previously,
         )
-        vaults_updated.update(vaults_updated_in_tree)
+        vaults_updated_previously.update(vaults_updated_in_tree)
+
+        # Deposit to sub vaults if there are withdrawable assets
         await process_deposit_to_sub_vaults(meta_vault_address=meta_vault_address)
 
 
