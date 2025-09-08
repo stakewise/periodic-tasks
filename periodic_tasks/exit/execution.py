@@ -4,20 +4,20 @@ from eth_typing import ChecksumAddress, HexStr
 from web3 import Web3
 from web3.types import BlockNumber
 
-from periodic_tasks.common.contracts import keeper_contract, multicall_contract, ContractWrapper
+from periodic_tasks.common.contracts import keeper_contract, multicall_contract
 from periodic_tasks.common.execution import transaction_gas_wrapper
 from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
 from periodic_tasks.common.typings import HarvestParams
-from periodic_tasks.common.clients import setup_execution_client, hot_wallet_account
 
 from .clients import execution_client
+from .contracts import LeverageStrategyContract
 from .typings import ExitRequest
 
 logger = logging.getLogger(__name__)
 
 
 async def can_force_enter_exit_queue(
-    leverage_strategy_contract: ContractWrapper,
+    leverage_strategy_contract: LeverageStrategyContract,
     vault: ChecksumAddress,
     user: ChecksumAddress,
     harvest_params: HarvestParams | None,
@@ -44,14 +44,13 @@ async def can_force_enter_exit_queue(
 
 # pylint: disable-next=too-many-arguments
 async def claim_exited_assets(
-    leverage_strategy_contract: ContractWrapper,
+    leverage_strategy_contract: LeverageStrategyContract,
     vault: ChecksumAddress,
     user: ChecksumAddress,
     exit_request: ExitRequest,
     harvest_params: HarvestParams | None,
     block_number: BlockNumber,
 ) -> HexStr | None:
-    await setup_execution_client(multicall_contract.contract.w3, hot_wallet_account)
     calls = []
     if harvest_params and await keeper_contract.can_harvest(vault, block_number):
         update_state_call = (
@@ -102,7 +101,7 @@ async def claim_exited_assets(
 
 
 async def force_enter_exit_queue(
-    leverage_strategy_contract: ContractWrapper,
+    leverage_strategy_contract: LeverageStrategyContract,
     vault: ChecksumAddress,
     user: ChecksumAddress,
     harvest_params: HarvestParams | None,
@@ -148,7 +147,7 @@ async def force_enter_exit_queue(
 
 
 def _encode_update_state_call(
-    leverage_strategy_contract: ContractWrapper,
+    leverage_strategy_contract: LeverageStrategyContract,
     vault_address: ChecksumAddress,
     harvest_params: HarvestParams,
 ) -> HexStr:

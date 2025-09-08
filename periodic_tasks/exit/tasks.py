@@ -3,14 +3,14 @@ import logging
 from web3.types import BlockNumber
 
 from periodic_tasks.common.graph import graph_get_vaults
-from periodic_tasks.common.typings import HarvestParams
 from periodic_tasks.common.settings import network_config
+from periodic_tasks.common.typings import HarvestParams
 
 from .clients import execution_client, graph_client
 from .contracts import (
+    get_leverage_strategy_contract,
     ostoken_vault_escrow_contract,
     strategy_registry_contract,
-    get_leverage_strategy_contract,
 )
 from .execution import (
     can_force_enter_exit_queue,
