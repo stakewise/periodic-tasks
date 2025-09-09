@@ -264,14 +264,7 @@ async def get_claimable_sub_vault_exit_requests(
 
     for exit_requests in vault_to_exit_requests.values():
         for exit_request in exit_requests:
-            # Verify if the claim delay has elapsed
-            # Relevant for testnets with short exit queues (e.g., Chiado)
-            if (
-                exit_request.exited_assets == exit_request.total_assets
-                and exit_request.exited_assets > 0
-                and not exit_request.is_claimable
-                and not exit_request.is_claimed
-            ):
+            if exit_request.is_waiting_for_claim_delay:
                 raise ClaimDelayNotPassedException(exit_request)
 
             claimable_exit_requests.append(SubVaultExitRequest.from_exit_request(exit_request))
