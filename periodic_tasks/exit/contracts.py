@@ -16,7 +16,9 @@ class LeverageStrategyContract(ContractWrapper):
 
 
 class StrategyProxyContract(ContractWrapper):
-    ...
+    async def get_owner(self) -> ChecksumAddress:
+        owner = await self.contract.functions.owner().call()
+        return Web3.to_checksum_address(owner)
 
 
 class OsTokenVaultEscrowContract(ContractWrapper):
@@ -61,7 +63,7 @@ async def get_strategy_proxy_contract(proxy: ChecksumAddress) -> StrategyProxyCo
 
 async def get_leverage_strategy_contract(proxy: ChecksumAddress) -> LeverageStrategyContract:
     proxy_contract = await get_strategy_proxy_contract(proxy)
-    leverage_strategy_address = await proxy_contract.contract.functions.owner().call()
+    leverage_strategy_address = await proxy_contract.get_owner()
     return LeverageStrategyContract(
         abi_path='abi/ILeverageStrategy.json',
         address=leverage_strategy_address,

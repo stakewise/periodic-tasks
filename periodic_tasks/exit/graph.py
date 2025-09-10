@@ -155,7 +155,7 @@ async def graph_ostoken_exit_requests(
                 vault=Web3.to_checksum_address(data['vault']['id']),
                 owner=Web3.to_checksum_address(data['owner']),
                 ltv=data['ltv'],
-                exit_request=id_to_exit_request[data['id']],
+                exit_request=exit_request,
             )
         )
 
