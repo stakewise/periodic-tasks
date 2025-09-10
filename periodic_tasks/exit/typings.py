@@ -23,7 +23,8 @@ class ExitRequest:
     @property
     def is_waiting_for_claim_delay(self) -> bool:
         """
-        Returns True if the assets have exited but the claim delay has not passed yet.
+        Returns True if the assets have exited (fully or partially),
+        but the claim delay has not passed yet.
         Relevant for testnets with short exit queues (e.g., Chiado)
         """
         return self.exited_assets > 0 and not self.is_claimable and not self.is_claimed
