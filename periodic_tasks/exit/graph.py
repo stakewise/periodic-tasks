@@ -33,6 +33,7 @@ async def graph_get_leverage_positions(block_number: BlockNumber) -> list[Levera
               timestamp
               receiver
               exitQueueIndex
+              isClaimed
               isClaimable
               exitedAssets
               totalAssets
@@ -144,13 +145,17 @@ async def graph_ostoken_exit_requests(
 
     result = []
     for data in response:
+        exit_request = id_to_exit_request[data['id']]
+        if exit_request.is_claimed:
+            continue
+
         result.append(
             OsTokenExitRequest(
                 id=data['id'],
                 vault=Web3.to_checksum_address(data['vault']['id']),
                 owner=Web3.to_checksum_address(data['owner']),
                 ltv=data['ltv'],
-                exit_request=id_to_exit_request[data['id']],
+                exit_request=exit_request,
             )
         )
 

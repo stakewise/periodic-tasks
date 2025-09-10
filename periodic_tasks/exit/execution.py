@@ -10,13 +10,14 @@ from periodic_tasks.common.settings import EXECUTION_TRANSACTION_TIMEOUT
 from periodic_tasks.common.typings import HarvestParams
 
 from .clients import execution_client
-from .contracts import leverage_strategy_contract
+from .contracts import LeverageStrategyContract
 from .typings import ExitRequest
 
 logger = logging.getLogger(__name__)
 
 
 async def can_force_enter_exit_queue(
+    leverage_strategy_contract: LeverageStrategyContract,
     vault: ChecksumAddress,
     user: ChecksumAddress,
     harvest_params: HarvestParams | None,
@@ -27,7 +28,7 @@ async def can_force_enter_exit_queue(
     if harvest_params and await keeper_contract.can_harvest(vault, block_number):
         update_state_call = (
             leverage_strategy_contract.address,
-            _encode_update_state_call(vault, harvest_params),
+            _encode_update_state_call(leverage_strategy_contract, vault, harvest_params),
         )
         calls.append(update_state_call)
 
@@ -41,7 +42,9 @@ async def can_force_enter_exit_queue(
     return bool(Web3.to_int(response.pop(0)))
 
 
+# pylint: disable-next=too-many-arguments
 async def claim_exited_assets(
+    leverage_strategy_contract: LeverageStrategyContract,
     vault: ChecksumAddress,
     user: ChecksumAddress,
     exit_request: ExitRequest,
@@ -52,7 +55,7 @@ async def claim_exited_assets(
     if harvest_params and await keeper_contract.can_harvest(vault, block_number):
         update_state_call = (
             leverage_strategy_contract.address,
-            _encode_update_state_call(vault, harvest_params),
+            _encode_update_state_call(leverage_strategy_contract, vault, harvest_params),
         )
         calls.append(update_state_call)
 
@@ -98,6 +101,7 @@ async def claim_exited_assets(
 
 
 async def force_enter_exit_queue(
+    leverage_strategy_contract: LeverageStrategyContract,
     vault: ChecksumAddress,
     user: ChecksumAddress,
     harvest_params: HarvestParams | None,
@@ -107,7 +111,7 @@ async def force_enter_exit_queue(
     if harvest_params and await keeper_contract.can_harvest(vault, block_number):
         update_state_call = (
             leverage_strategy_contract.address,
-            _encode_update_state_call(vault, harvest_params),
+            _encode_update_state_call(leverage_strategy_contract, vault, harvest_params),
         )
         calls.append(update_state_call)
 
@@ -143,7 +147,9 @@ async def force_enter_exit_queue(
 
 
 def _encode_update_state_call(
-    vault_address: ChecksumAddress, harvest_params: HarvestParams
+    leverage_strategy_contract: LeverageStrategyContract,
+    vault_address: ChecksumAddress,
+    harvest_params: HarvestParams,
 ) -> HexStr:
     return leverage_strategy_contract.encode_abi(
         fn_name='updateVaultState',

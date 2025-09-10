@@ -1,5 +1,6 @@
 import logging
 
+from eth_typing import ChecksumAddress
 from web3 import Web3
 
 from periodic_tasks.common.contracts import ContractWrapper
@@ -11,8 +12,13 @@ logger = logging.getLogger(__name__)
 
 
 class LeverageStrategyContract(ContractWrapper):
-    async def strategy_id(self) -> str:
-        return await self.contract.functions.strategyId().call()
+    ...
+
+
+class StrategyProxyContract(ContractWrapper):
+    async def get_owner(self) -> ChecksumAddress:
+        owner = await self.contract.functions.owner().call()
+        return Web3.to_checksum_address(owner)
 
 
 class OsTokenVaultEscrowContract(ContractWrapper):
@@ -34,12 +40,6 @@ class StrategiesRegistryContract(ContractWrapper):
         return Web3.to_int(value)
 
 
-leverage_strategy_contract = LeverageStrategyContract(
-    abi_path='abi/ILeverageStrategy.json',
-    address=network_config.LEVERAGE_STRATEGY_CONTRACT_ADDRESS,
-    client=execution_client,
-)
-
 strategy_registry_contract = StrategiesRegistryContract(
     abi_path='abi/IStrategyRegistry.json',
     address=network_config.STRATEGY_REGISTRY_CONTRACT_ADDRESS,
@@ -51,3 +51,21 @@ ostoken_vault_escrow_contract = OsTokenVaultEscrowContract(
     address=network_config.OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS,
     client=execution_client,
 )
+
+
+async def get_strategy_proxy_contract(proxy: ChecksumAddress) -> StrategyProxyContract:
+    return StrategyProxyContract(
+        abi_path='abi/IStrategyProxy.json',
+        address=proxy,
+        client=execution_client,
+    )
+
+
+async def get_leverage_strategy_contract(proxy: ChecksumAddress) -> LeverageStrategyContract:
+    proxy_contract = await get_strategy_proxy_contract(proxy)
+    leverage_strategy_address = await proxy_contract.get_owner()
+    return LeverageStrategyContract(
+        abi_path='abi/ILeverageStrategy.json',
+        address=leverage_strategy_address,
+        client=execution_client,
+    )
