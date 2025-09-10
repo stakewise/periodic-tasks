@@ -139,7 +139,9 @@ async def fetch_ostoken_exit_requests(block_number: BlockNumber) -> list[OsToken
     max_ltv_percent = max_ltv_percent - max_ltv_percent * LTV_PERCENT_DELTA
     exit_requests = await graph_ostoken_exit_requests(max_ltv_percent, block_number=block_number)
     exit_requests = [
-        exit_request for exit_request in exit_requests if exit_request.exit_request.can_be_claimed
+        exit_request
+        for exit_request in exit_requests
+        if exit_request.exit_request.is_fully_claimable
     ]
 
     return exit_requests
@@ -166,7 +168,7 @@ async def handle_leverage_position(
         return
 
     # claim active exit request
-    if position.exit_request and position.exit_request.can_be_claimed:
+    if position.exit_request and position.exit_request.is_fully_claimable:
         logger.info(
             'Claiming exited assets for leverage positions: vault=%s, user=%s...',
             position.vault,

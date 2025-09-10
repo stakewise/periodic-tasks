@@ -17,7 +17,7 @@ class ExitRequest:
     total_assets: Wei
 
     @property
-    def can_be_claimed(self) -> bool:
+    def is_fully_claimable(self) -> bool:
         return self.is_claimable and self.exited_assets == self.total_assets
 
     @property
