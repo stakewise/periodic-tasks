@@ -26,12 +26,7 @@ class ExitRequest:
         Returns True if the assets have exited but the claim delay has not passed yet.
         Relevant for testnets with short exit queues (e.g., Chiado)
         """
-        return (
-            self.exited_assets == self.total_assets
-            and self.exited_assets > 0
-            and not self.is_claimable
-            and not self.is_claimed
-        )
+        return self.exited_assets > 0 and not self.is_claimable and not self.is_claimed
 
     @staticmethod
     def from_graph(data: dict) -> 'ExitRequest':
