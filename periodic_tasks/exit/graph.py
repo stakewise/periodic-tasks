@@ -190,6 +190,7 @@ async def graph_get_exit_requests_by_ids(
             timestamp
             receiver
             exitQueueIndex
+            isClaimed
             isClaimable
             exitedAssets
             totalAssets
@@ -208,14 +209,18 @@ async def graph_get_exit_requests_by_ids(
     return result
 
 
-async def graph_get_claimable_exit_requests_for_meta_vault(
+async def graph_get_exit_requests_for_meta_vault(
     meta_vault: ChecksumAddress,
 ) -> dict[ChecksumAddress, list[ExitRequest]]:
+    """
+    Returns mapping from sub-vault address to list of ExitRequest objects
+    Skips claimed exit requests and those with exitedAssets == 0
+    """
     query = gql(
         """
         query exitRequestQuery($owner: String, $first: Int, $skip: Int) {
           exitRequests(
-            where: { owner: $owner, isClaimable: true },
+            where: { owner: $owner, isClaimed: false, exitedAssets_gt: 0 },
             orderBy: id,
             first: $first,
             skip: $skip
@@ -226,6 +231,7 @@ async def graph_get_claimable_exit_requests_for_meta_vault(
             owner
             receiver
             exitQueueIndex
+            isClaimed
             isClaimable
             exitedAssets
             totalAssets

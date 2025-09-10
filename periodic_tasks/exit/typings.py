@@ -11,13 +11,23 @@ class ExitRequest:
     position_ticket: int
     timestamp: int
     exit_queue_index: int | None
+    is_claimed: bool
     is_claimable: bool
     exited_assets: Wei
     total_assets: Wei
 
     @property
-    def can_be_claimed(self) -> bool:
+    def is_fully_claimable(self) -> bool:
         return self.is_claimable and self.exited_assets == self.total_assets
+
+    @property
+    def is_waiting_for_claim_delay(self) -> bool:
+        """
+        Returns True if the assets have exited (fully or partially),
+        but the claim delay has not passed yet.
+        Relevant for testnets with short exit queues (e.g., Chiado)
+        """
+        return self.exited_assets > 0 and not self.is_claimable and not self.is_claimed
 
     @staticmethod
     def from_graph(data: dict) -> 'ExitRequest':
@@ -30,6 +40,7 @@ class ExitRequest:
             position_ticket=int(data['positionTicket']),
             timestamp=int(data['timestamp']),
             exit_queue_index=exit_queue_index,
+            is_claimed=data['isClaimed'],
             is_claimable=data['isClaimable'],
             exited_assets=Wei(int(data['exitedAssets'])),
             total_assets=Wei(int(data['totalAssets'])),
