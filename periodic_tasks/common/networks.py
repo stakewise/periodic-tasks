@@ -65,9 +65,9 @@ PRICE_NETWORKS: dict[str, PriceNetworkConfig | None] = {
 @dataclass
 class NetworkConfig(BaseNetworkConfig):
     VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS: ChecksumAddress
-    LEVERAGE_STRATEGY_CONTRACT_ADDRESS: ChecksumAddress
     STRATEGY_REGISTRY_CONTRACT_ADDRESS: ChecksumAddress
     OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS: ChecksumAddress
+    LEVERAGE_STRATEGY_ID: str
     VAULT_BALANCE_UNIT: str
 
 
@@ -77,9 +77,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xe0Ae8B04922d6e3fA06c2496A94EF2875EFcC7BB'
         ),
-        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0xA3bdb3a57626900E4Dd9cC1C2c07bA60F4A44Fbc'
-        ),
+        LEVERAGE_STRATEGY_ID='0x8b74cefe9f33d72ccd3521e6d331272921607e547c75c914c2c56cfdad9defed',
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x90b82E4b3aa385B4A02B7EBc1892a4BeD6B5c465'
         ),
@@ -93,9 +91,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xcF619F9Dd8eB483239de953251fd13cB0F977c6C'
         ),
-        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0x6A2911F94da08Da01158d645Bf85152b338E015D'
-        ),
+        LEVERAGE_STRATEGY_ID='0x8b74cefe9f33d72ccd3521e6d331272921607e547c75c914c2c56cfdad9defed',
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x6A2911F94da08Da01158d645Bf85152b338E015D'
         ),
@@ -109,7 +105,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xdEa72c54f63470349CE2dC12f8232FE00241abE6'
         ),
-        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        LEVERAGE_STRATEGY_ID='',
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x28F325dD287a5984B754d34CfCA38af3A8429e71'
@@ -121,7 +117,7 @@ NETWORKS: dict[str, NetworkConfig] = {
         VAULT_USER_LTV_TRACKER_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xe0Ae8B04922d6e3fA06c2496A94EF2875EFcC7BB'
         ),
-        LEVERAGE_STRATEGY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
+        LEVERAGE_STRATEGY_ID='',
         STRATEGY_REGISTRY_CONTRACT_ADDRESS=ZERO_CHECKSUM_ADDRESS,
         OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x00aa8A78d88a9865b5b0F4ce50c3bB018c93FBa7'

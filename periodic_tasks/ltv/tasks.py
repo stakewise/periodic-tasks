@@ -19,7 +19,7 @@ async def update_vault_max_ltv_user() -> None:
     """
     Finds user having maximum LTV in given vault and submits this user in the LTV Tracker contract.
     """
-    block = await execution_client.eth.get_block('finalized')
+    block = await execution_client.eth.get_block('latest')
     logger.debug('Current block: %d', block['number'])
 
     # Get max LTV user for vault

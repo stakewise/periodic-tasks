@@ -21,6 +21,9 @@ async def main() -> None:
 
     await setup_execution_client(execution_client, hot_wallet_account)
 
+    # multicall contract is instantiated without account
+    # multicall_contract.contract.w3 = execution_client
+
     await force_exits()
 
 
