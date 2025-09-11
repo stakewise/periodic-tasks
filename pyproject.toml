@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "periodic-tasks"
-version = "v0.6.4"
+version = "v0.6.5"
 description = ""
 authors = ["StakeWise Labs <info@stakewise.io>"]
 readme = "README.md"
