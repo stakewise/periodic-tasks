@@ -30,6 +30,7 @@ async def wait_for_graph_node_sync_to_block(
 ) -> None:
     """
     Waits until graph node is available and synced to the specified block number of execution node.
+    Useful for checking against latest block.
     """
     await _wait_for_graph_node_sync(
         graph_client=graph_client,
@@ -62,9 +63,12 @@ async def _wait_for_graph_node_sync(
             continue
 
         if isinstance(block_identifier, int):
+            # Fixed block number
             execution_block_number = block_identifier
         else:
-            # Refresh block each time
+            # Example: block_identifier = 'finalized'
+            # Block number is changing on each iteration,
+            # so we need to fetch it from execution client
             execution_client = cast(AsyncWeb3, execution_client)
             execution_block_number = (await execution_client.eth.get_block(block_identifier))[
                 'number'
