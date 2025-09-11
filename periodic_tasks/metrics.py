@@ -15,7 +15,11 @@ from periodic_tasks.common.settings import (
     NETWORK,
     network_config,
 )
-from periodic_tasks.exit.clients import execution_client
+from periodic_tasks.common.startup_checks import (
+    wait_for_graph_node_sync_to_block,
+    wait_for_graph_node_sync_to_finalized_block,
+)
+from periodic_tasks.exit.clients import execution_client, graph_client
 from periodic_tasks.exit.tasks import (
     fetch_leverage_positions,
     fetch_ostoken_exit_requests,
@@ -61,6 +65,10 @@ metrics.set_app_version()
 async def liquidation_metrics() -> None:
     block = await execution_client.eth.get_block('latest')
     block_number = block['number']
+    await wait_for_graph_node_sync_to_block(
+        graph_client=graph_client,
+        block_number=block_number,
+    )
     metrics.execution_block.labels(network=NETWORK).set(block_number)
 
     if network_config.OSTOKEN_VAULT_ESCROW_CONTRACT_ADDRESS != ZERO_CHECKSUM_ADDRESS:
@@ -87,6 +95,11 @@ async def liquidation_metrics() -> None:
 
 async def main() -> None:
     metrics_server()
+
+    await wait_for_graph_node_sync_to_finalized_block(
+        graph_client=graph_client,
+        execution_client=execution_client,
+    )
 
     with InterruptHandler() as interrupt_handler:
         while not interrupt_handler.exit:

@@ -1,6 +1,6 @@
 import logging
 
-from eth_typing import ChecksumAddress
+from eth_typing import BlockNumber, ChecksumAddress
 from gql import gql
 from sw_utils.graph.client import GraphClient
 
@@ -64,3 +64,23 @@ async def graph_get_vaults(
         graph_vaults_map[vault.address] = vault
 
     return graph_vaults_map
+
+
+async def graph_get_latest_block(graph_client: GraphClient) -> BlockNumber:
+    """
+    Returns the last synced block number of the graph node.
+    """
+    query = gql(
+        '''
+        query Meta {
+          _meta {
+            block {
+              number
+            }
+          }
+        }
+    '''
+    )
+    response = await graph_client.run_query(query)
+    graph_block_number = response['_meta']['block']['number']
+    return BlockNumber(graph_block_number)
