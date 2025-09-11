@@ -1,12 +1,9 @@
 import asyncio
+import logging
 from typing import cast
-from sw_utils.graph.client import GraphClient
 
 from eth_typing import BlockIdentifier, BlockNumber
-
-
-import logging
-
+from sw_utils.graph.client import GraphClient
 from web3 import AsyncWeb3
 
 from periodic_tasks.common.graph import graph_get_latest_block
