@@ -2,6 +2,7 @@ import logging
 from decimal import Decimal
 
 from periodic_tasks.common.graph import graph_get_vaults
+from periodic_tasks.common.startup_checks import wait_for_graph_node_sync_to_block
 
 from .clients import execution_client, graph_client
 from .contracts import vault_user_ltv_tracker_contract
@@ -21,6 +22,12 @@ async def update_vault_max_ltv_user() -> None:
     """
     block = await execution_client.eth.get_block('latest')
     logger.debug('Current block: %d', block['number'])
+    block_number = block['number']
+
+    await wait_for_graph_node_sync_to_block(
+        graph_client=graph_client,
+        block_number=block_number,
+    )
 
     # Get max LTV user for vault
     max_ltv_users = await get_max_ltv_users()

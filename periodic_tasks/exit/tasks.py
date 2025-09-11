@@ -4,6 +4,7 @@ from web3.types import BlockNumber
 
 from periodic_tasks.common.graph import graph_get_vaults
 from periodic_tasks.common.settings import network_config
+from periodic_tasks.common.startup_checks import wait_for_graph_node_sync_to_block
 from periodic_tasks.common.typings import HarvestParams
 
 from .clients import execution_client, graph_client
@@ -39,6 +40,11 @@ async def force_exits() -> None:
     block = await execution_client.eth.get_block('latest')
     logger.debug('Current block: %d', block['number'])
     block_number = block['number']
+
+    await wait_for_graph_node_sync_to_block(
+        graph_client=graph_client,
+        block_number=block_number,
+    )
     await handle_leverage_positions(block_number)
     await handle_ostoken_exit_requests(block_number)
 
