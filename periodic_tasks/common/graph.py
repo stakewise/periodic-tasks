@@ -20,6 +20,9 @@ async def graph_get_vaults(
     where_conditions: list[str] = []
     params: dict = {}
 
+    if vaults == []:
+        return {}
+
     if vaults:
         where_conditions.append('id_in: $vaults')
         params['vaults'] = [v.lower() for v in vaults]
