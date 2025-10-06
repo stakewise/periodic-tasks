@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+import periodic_tasks
 from periodic_tasks.common.clients import (
     execution_client,
     hot_wallet_account,
@@ -18,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
+    logger.info('Starting periodic tasks %s', periodic_tasks.__version__)
+
     if not hot_wallet_account:
         raise ValueError('Set HOT_WALLET_PRIVATE_KEY environment variable')
 

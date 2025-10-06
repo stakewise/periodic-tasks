@@ -1,9 +1,11 @@
 import asyncio
+import logging
 import time
 
 from prometheus_client import Gauge, Info, start_http_server
 from sw_utils import InterruptHandler
 
+import periodic_tasks
 from periodic_tasks import _get_project_meta
 from periodic_tasks.common.clients import execution_client
 from periodic_tasks.common.graph_client import graph_client
@@ -26,6 +28,9 @@ from periodic_tasks.exit.tasks import (
     fetch_ostoken_exit_requests,
 )
 from periodic_tasks.ltv.tasks import get_max_ltv_users
+
+logger = logging.getLogger(__name__)
+
 
 RECORDS_LIMIT = 100
 
@@ -95,6 +100,8 @@ async def liquidation_metrics() -> None:
 
 
 async def main() -> None:
+    logger.info('Starting periodic tasks %s', periodic_tasks.__version__)
+
     metrics_server()
 
     await wait_for_graph_node_sync_to_finalized_block(
