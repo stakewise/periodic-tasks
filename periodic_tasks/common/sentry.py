@@ -1,3 +1,4 @@
+import periodic_tasks
 from periodic_tasks.common.settings import NETWORK, SENTRY_DSN
 
 
@@ -13,3 +14,4 @@ def setup_sentry() -> None:
         environment=NETWORK,
     )
     sentry_sdk.set_tag('network', NETWORK)
+    sentry_sdk.set_tag('project_version', periodic_tasks.__version__)

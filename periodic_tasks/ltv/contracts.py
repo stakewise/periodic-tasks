@@ -4,12 +4,11 @@ from eth_typing import ChecksumAddress
 from hexbytes import HexBytes
 from web3 import Web3
 
+from periodic_tasks.common.clients import execution_client
 from periodic_tasks.common.contracts import ContractWrapper
 from periodic_tasks.common.execution import transaction_gas_wrapper
 from periodic_tasks.common.settings import network_config
 from periodic_tasks.common.typings import HarvestParams
-
-from .clients import execution_client
 
 logger = logging.getLogger(__name__)
 

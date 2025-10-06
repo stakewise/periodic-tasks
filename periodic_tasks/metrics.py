@@ -5,6 +5,8 @@ from prometheus_client import Gauge, Info, start_http_server
 from sw_utils import InterruptHandler
 
 from periodic_tasks import _get_project_meta
+from periodic_tasks.common.clients import execution_client
+from periodic_tasks.common.graph_client import graph_client
 from periodic_tasks.common.logs import setup_logging
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.sentry import setup_sentry
@@ -19,7 +21,6 @@ from periodic_tasks.common.startup_checks import (
     wait_for_graph_node_sync_to_block,
     wait_for_graph_node_sync_to_finalized_block,
 )
-from periodic_tasks.exit.clients import execution_client, graph_client
 from periodic_tasks.exit.tasks import (
     fetch_leverage_positions,
     fetch_ostoken_exit_requests,

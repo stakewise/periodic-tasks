@@ -13,6 +13,7 @@ from periodic_tasks.common.contracts import (
 )
 from periodic_tasks.common.execution import wait_for_tx_confirmation
 from periodic_tasks.common.graph import graph_get_vaults
+from periodic_tasks.common.graph_client import graph_client
 from periodic_tasks.common.networks import ZERO_CHECKSUM_ADDRESS
 from periodic_tasks.common.settings import NETWORK, network_config
 from periodic_tasks.common.typings import Vault
@@ -22,7 +23,6 @@ from periodic_tasks.meta_vault.exceptions import ClaimDelayNotPassedException
 from periodic_tasks.meta_vault.typings import ContractCall, SubVaultExitRequest
 
 from . import settings
-from .clients import graph_client
 
 logger = logging.getLogger(__name__)
 

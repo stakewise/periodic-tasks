@@ -2,12 +2,13 @@ import logging
 
 from web3.types import BlockNumber
 
+from periodic_tasks.common.clients import execution_client
 from periodic_tasks.common.graph import graph_get_vaults
+from periodic_tasks.common.graph_client import graph_client
 from periodic_tasks.common.settings import network_config
 from periodic_tasks.common.startup_checks import wait_for_graph_node_sync_to_block
 from periodic_tasks.common.typings import HarvestParams
 
-from .clients import execution_client, graph_client
 from .contracts import (
     get_leverage_strategy_contract,
     ostoken_vault_escrow_contract,

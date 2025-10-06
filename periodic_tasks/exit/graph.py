@@ -4,7 +4,8 @@ from gql import gql
 from web3 import Web3
 from web3.types import BlockNumber, ChecksumAddress
 
-from .clients import graph_client
+from periodic_tasks.common.graph_client import graph_client
+
 from .typings import ExitRequest, LeveragePosition, OsTokenExitRequest
 
 DISABLED_LIQ_THRESHOLD = 2**64 - 1

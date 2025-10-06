@@ -4,7 +4,7 @@ from eth_typing import ChecksumAddress
 from gql import gql
 from web3 import Web3
 
-from .clients import graph_client
+from periodic_tasks.common.graph_client import graph_client
 
 logger = logging.getLogger(__name__)
 
