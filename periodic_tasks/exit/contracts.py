@@ -3,10 +3,9 @@ import logging
 from eth_typing import ChecksumAddress
 from web3 import Web3
 
+from periodic_tasks.common.clients import execution_client
 from periodic_tasks.common.contracts import ContractWrapper
 from periodic_tasks.common.settings import network_config
-
-from .clients import execution_client
 
 logger = logging.getLogger(__name__)
 

@@ -7,6 +7,10 @@ from periodic_tasks.common.networks import NETWORKS
 EXECUTION_ENDPOINT: str = config('EXECUTION_ENDPOINT', default='')
 HOT_WALLET_PRIVATE_KEY: str = config('HOT_WALLET_PRIVATE_KEY', default='')
 
+# graph
+GRAPH_API_URL: str = config('GRAPH_API_URL', default='')
+GRAPH_API_TIMEOUT: int = config('GRAPH_API_TIMEOUT', default='10', cast=int)
+GRAPH_API_RETRY_TIMEOUT: int = config('GRAPH_API_RETRY_TIMEOUT', default='60', cast=int)
 GRAPH_PAGE_SIZE: int = config('GRAPH_PAGE_SIZE', default=100, cast=int)
 
 

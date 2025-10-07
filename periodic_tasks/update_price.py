@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+import periodic_tasks
 from periodic_tasks.common.clients import hot_wallet_account, setup_execution_client
 from periodic_tasks.common.logs import setup_logging
 from periodic_tasks.common.sentry import setup_sentry
@@ -13,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
+    logger.info('Starting periodic tasks %s', periodic_tasks.__version__)
+
     if NETWORK not in SUPPORTED_NETWORKS:
         raise ValueError(f'Price update in network {NETWORK} is not supported')
 

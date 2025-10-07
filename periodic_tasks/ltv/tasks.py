@@ -1,10 +1,11 @@
 import logging
 from decimal import Decimal
 
+from periodic_tasks.common.clients import execution_client
 from periodic_tasks.common.graph import graph_get_vaults
+from periodic_tasks.common.graph_client import graph_client
 from periodic_tasks.common.startup_checks import wait_for_graph_node_sync_to_block
 
-from .clients import execution_client, graph_client
 from .contracts import vault_user_ltv_tracker_contract
 from .graph import graph_get_ostoken_vaults, graph_get_vault_max_ltv_allocator
 from .typings import VaultMaxLtvUser
