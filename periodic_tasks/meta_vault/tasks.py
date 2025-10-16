@@ -43,6 +43,10 @@ async def process_meta_vaults() -> None:
             logger.error('Meta vault %s not found in subgraph', meta_vault_address)
             continue
 
+        if not root_meta_vault.sub_vaults:
+            logger.info('Meta vault %s has no sub vaults. Skipping.', meta_vault_address)
+            continue
+
         # Update the state for the entire meta vault tree
         try:
             vaults_updated_in_tree = await meta_vault_tree_update_state(
@@ -136,6 +140,10 @@ async def _get_meta_vault_tree_update_state_calls(
         # Take the last meta vault
         meta_vault_address = stack.pop()
         meta_vault = meta_vaults_map[meta_vault_address]
+
+        if not meta_vault.sub_vaults:
+            logger.info('Meta vault %s has no sub vaults. Skipping.', meta_vault.address)
+            continue
 
         # Get calls for a single meta vault
         # skipping meta vaults among sub vaults.
