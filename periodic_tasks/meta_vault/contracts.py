@@ -21,6 +21,9 @@ class MetaVaultContract(ContractWrapper):
         tx_hash = await self.contract.functions.depositToSubVaults().transact()
         return Web3.to_hex(tx_hash)
 
+    async def get_exit_queue_index(self, position_ticket: int) -> int:
+        return await self.contract.functions.getExitQueueIndex(position_ticket).call()
+
     def encoder(self) -> 'MetaVaultEncoder':
         return MetaVaultEncoder(self)
 
