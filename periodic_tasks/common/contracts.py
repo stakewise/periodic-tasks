@@ -11,10 +11,10 @@ from web3.contract.async_contract import (
     AsyncContractEvents,
     AsyncContractFunctions,
 )
-from web3.types import BlockNumber, ChecksumAddress, EventData, HexStr, Wei
+from web3.types import BlockNumber, ChecksumAddress, EventData, HexStr, TxParams, Wei
 
 from .clients import execution_client
-from .settings import EVENTS_BLOCKS_RANGE_INTERVAL, network_config
+from .settings import EVENTS_BLOCKS_RANGE_INTERVAL, GAS_LIMIT, network_config
 from .typings import HarvestParams
 
 logger = logging.getLogger(__name__)
@@ -93,6 +93,9 @@ class VaultContract(ContractWrapper):
     def encoder(self) -> VaultEncoder:
         return VaultEncoder(self)
 
+    async def get_exit_queue_index(self, position_ticket: int) -> int:
+        return await self.contract.functions.getExitQueueIndex(position_ticket).call()
+
 
 class MulticallContract(ContractWrapper):
     async def aggregate(
@@ -106,7 +109,10 @@ class MulticallContract(ContractWrapper):
         self,
         data: list[tuple[ChecksumAddress, HexStr]],
     ) -> HexStr:
-        tx_hash = await self.contract.functions.aggregate(data).transact()
+        tx_params: TxParams = {}
+        if GAS_LIMIT > 0:
+            tx_params['gas'] = GAS_LIMIT
+        tx_hash = await self.contract.functions.aggregate(data).transact(tx_params)
         return HexStr(tx_hash.hex())
 
 
@@ -124,6 +130,14 @@ class KeeperContract(ContractWrapper):
             from_block=from_block,
             to_block=to_block,
         )
+
+
+def get_vault_contract(address: ChecksumAddress) -> VaultContract:
+    return VaultContract(
+        abi_path='abi/IEthVault.json',
+        address=address,
+        client=execution_client,
+    )
 
 
 multicall_contract = MulticallContract(
