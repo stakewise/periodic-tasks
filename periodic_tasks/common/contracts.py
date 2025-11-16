@@ -11,10 +11,10 @@ from web3.contract.async_contract import (
     AsyncContractEvents,
     AsyncContractFunctions,
 )
-from web3.types import BlockNumber, ChecksumAddress, EventData, HexStr, TxParams, Wei
+from web3.types import BlockNumber, ChecksumAddress, EventData, HexStr, Wei
 
 from .clients import execution_client
-from .settings import EVENTS_BLOCKS_RANGE_INTERVAL, GAS_LIMIT, network_config
+from .settings import EVENTS_BLOCKS_RANGE_INTERVAL, network_config
 from .typings import HarvestParams
 
 logger = logging.getLogger(__name__)
@@ -109,10 +109,7 @@ class MulticallContract(ContractWrapper):
         self,
         data: list[tuple[ChecksumAddress, HexStr]],
     ) -> HexStr:
-        tx_params: TxParams = {}
-        if GAS_LIMIT > 0:
-            tx_params['gas'] = GAS_LIMIT
-        tx_hash = await self.contract.functions.aggregate(data).transact(tx_params)
+        tx_hash = await self.contract.functions.aggregate(data).transact()
         return HexStr(tx_hash.hex())
 
 

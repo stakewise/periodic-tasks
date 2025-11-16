@@ -29,7 +29,6 @@ MAX_FEE_PER_GAS_GWEI: Gwei = config('MAX_FEE_PER_GAS_GWEI', default=100, cast=in
 MAX_FEE_PER_GAS: Wei = Web3.to_wei(MAX_FEE_PER_GAS_GWEI, 'gwei')
 PRIORITY_FEE_NUM_BLOCKS: int = config('PRIORITY_FEE_NUM_BLOCKS', default=10, cast=int)
 PRIORITY_FEE_PERCENTILE: float = config('PRIORITY_FEE_PERCENTILE', default=80.0, cast=float)
-GAS_LIMIT: Wei = config('GAS_LIMIT', default=0, cast=int)
 
 NETWORK = config('NETWORK')
 network_config = NETWORKS[NETWORK]
