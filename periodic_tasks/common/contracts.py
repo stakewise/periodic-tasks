@@ -93,6 +93,9 @@ class VaultContract(ContractWrapper):
     def encoder(self) -> VaultEncoder:
         return VaultEncoder(self)
 
+    async def get_exit_queue_index(self, position_ticket: int) -> int:
+        return await self.contract.functions.getExitQueueIndex(position_ticket).call()
+
 
 class MulticallContract(ContractWrapper):
     async def aggregate(
@@ -124,6 +127,14 @@ class KeeperContract(ContractWrapper):
             from_block=from_block,
             to_block=to_block,
         )
+
+
+def get_vault_contract(address: ChecksumAddress) -> VaultContract:
+    return VaultContract(
+        abi_path='abi/IEthVault.json',
+        address=address,
+        client=execution_client,
+    )
 
 
 multicall_contract = MulticallContract(
